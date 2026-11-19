@@ -45,6 +45,19 @@ python -m experiments.make_es_tables
 python -m experiments.make_es_plots
 ```
 
+## Audits
+
+Independent re-checks of the saved results (exit code 0 = all checks passed). Run from the problem folder:
+
+| Folder | Command | What it checks |
+|---|---|---|
+| `problem_1` | `python -m experiments.audit_tsp_results` | All 120 TSP runs and the summary table, with its own parser and distance code (no project imports) |
+| `problem_1` | `python -m experiments.audit_tsp_trace` | Logs every evaluation of 2 real runs and rebuilds the Bees Algorithm rules |
+| `problem_1` | `python -m experiments.audit_continuous_results` | All 80 continuous runs and the summary table, with its own copy of the SFU formulas (no project imports) |
+| `problem_1` | `python -m experiments.audit_continuous_trace` | Logs every evaluation of 3 real runs and rebuilds the rules, including the ±10 % neighbourhood |
+| `problem_2` | `python -m experiments.audit_es_results` | All 450 ES runs and the summary table, in plain Python (no project imports, no NumPy) |
+| `problem_2` | `python -m experiments.audit_es_trace` | Logs every evaluation of 6 full runs and rebuilds the rules of all three ES variants |
+
 ## Kinds of work in this repository
 
 | Kind | Where | Status |

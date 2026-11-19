@@ -359,7 +359,7 @@ KKT certificate on a 2-asset problem with a known solution. Worth it if R1–R2 
 
 ## 6. Implementation status (added after instruction S8)
 
-The student approved R1–R7 (not R8). Implemented as documented, tested scripts. The numbers in
+The student approved R1–R7 (instruction S8) and later R8 (S9). Implemented as documented, tested scripts. The numbers in
 sections 2.1–2.3 above come from the temporary review scripts; the official, reproducible numbers are
 in the files listed below.
 
@@ -372,7 +372,7 @@ in the files listed below.
 | R5 documentation | Done; superseded statements are kept with revision notes | `docs/implementation_notes.md`, `docs/oral_exam_preparation.md`, READMEs |
 | R6 Part A paired table | Done (60/60) | `problem_1/results/tables/tsp_paired_comparison.md` |
 | R7 tests | Done (Problem 1: 171 tests, Problem 2: 137 tests) | `problem_*/tests/test_supplementary.py`, `problem_2/tests/test_statistics_tools.py` |
-| R8 hygiene | Not approved; not implemented | – |
+| R8 hygiene | Approved later (S9) and done: AI comment in both `pytest.ini` files; "Audits" section in the main README | `problem_*/pytest.ini`, `README.md` |
 
 Differences from the review's preliminary numbers:
 - **1B Evidence A:** the official script draws neighbours in a fixed, sorted order with its own probe
