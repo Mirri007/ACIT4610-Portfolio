@@ -18,14 +18,13 @@ table and plotting scripts, audit scripts and automated tests.
   to the assignment specification.
 - Writing automated tests and independent audit scripts that re-check the saved results.
 - Running the experiments and generating the tables and figures from the saved results.
-- Writing the repository documentation (README files, implementation notes, requirements checklist).
+- Writing the repository documentation (README files, implementation notes, requirements compliance matrix).
 - Reviewing the implementation and results, and carrying out the supplementary diagnostic analyses.
 - Explaining algorithms and code to the student as study material.
 
 **Role of the student**
 - Defined the requirements and quality standards.
 - Confirmed the required cases against the original assignment PDF.
-- Decided when to proceed between stages.
 - Approved or rejected methodological choices (for example the parameter pilots and the
   post-hoc analyses).
 - Reviewed the code and results.

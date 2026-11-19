@@ -6,7 +6,7 @@ Code, data and results for the ACIT4610 final portfolio (OsloMet, 2026).
 |--------|----------|--------|
 | [`problem_1/`](problem_1/README.md) | Bees Algorithm: TSP (Part A) and continuous functions (Part B) | Parts A and B done and audited |
 | [`problem_2/`](problem_2/README.md) | Evolution Strategies for portfolio optimisation | Done and audited |
-| `docs/` | Requirements checklist, implementation notes, declaration of AI use | |
+| `docs/` | Requirements compliance matrix, implementation notes, declaration of AI use | |
 
 ## Requirements
 
@@ -65,7 +65,7 @@ Independent re-checks of the saved results (exit code 0 = all checks passed). Ru
 | Required experiments, tables and figures | `problem_*/experiments/`, `problem_*/results/{raw,convergence,tables,figures}/` | The assignment's results |
 | Parameter pilots | `problem_1/experiments/*pilot*.py` | Chose the BA settings before the final runs |
 | Audits | `problem_*/experiments/audit_*.py` | Independent re-checks of saved results |
-| Post-hoc diagnostics and supplementary analyses | `problem_*/supplementary/`, `problem_*/results/supplementary/` | Added after the critical review; explain results, never replace them |
+| Post-hoc diagnostics and supplementary analyses | `problem_*/supplementary/`, `problem_*/results/supplementary/` | Added after the final experiments; explain results, never replace them |
 
 Supplementary analyses need one extra package: `python -m pip install -r requirements-supplementary.txt`
 (SciPy, used only for a reference solver in Problem 2). See the problem READMEs and `docs/implementation_notes.md`.

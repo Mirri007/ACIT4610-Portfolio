@@ -12,7 +12,7 @@ tables and file layouts are in the README files and are not repeated here.
 | Robustness check (Problem 1A) | Re-checking the chosen BA setting on other instances, after the required runs | 200–204 |
 | Post-hoc diagnostics and supplementary analyses | Explaining results; never part of the required results | 300–310 |
 | Preliminary checks (Problem 2) | Smoke test and timing | 900–904 |
-| Automated tests | | ≥ 1000 (Problem 2); various (Problem 1) |
+| Automated tests | Correctness checks only; not used to choose settings or report results | ≥ 1000 (Problem 2); various, including 0–9 (Problem 1) |
 
 ---
 

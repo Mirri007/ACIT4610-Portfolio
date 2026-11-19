@@ -49,8 +49,8 @@ Why one shared implementation?
 The BA steps above do not depend on what a "solution" is. Only two operations do:
   * how to create a random solution (random tour vs. random vector), and
   * how to create a neighbour (swap/reversal vs. a small numerical change).
-These are passed in as functions. This makes it easy to explain, and to show in the report,
-what stays common between discrete and continuous BA and what changes.
+These are passed in as functions, which makes explicit what stays common between discrete and
+continuous BA and what changes.
 """
 
 from dataclasses import dataclass, asdict
@@ -151,7 +151,7 @@ def run_bees_algorithm(tracker, create_random_solution, create_neighbour, settin
         population.append(Bee(solution, tracker.evaluate(solution)))
 
     # The assignment asks us to record the best value of the initial population, so we can
-    # later report how much the search improved on it.
+    # measure how much the search improved on it.
     initial_best_value = tracker.best_value
 
     iterations_started = 0

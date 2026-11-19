@@ -154,7 +154,7 @@ def main():
             check(abs(float(row[column]) - value) < 1e-9,
                   f"summary {row['Instance']}/{row['Neighbourhood']} {column}: saved {row[column]}, recomputed {value}")
 
-    # Information shown for the report: the route-plot run and whether it is a tie.
+    # Extra information: the run shown in the route plot, and whether it is a tie.
     berlin = sorted((run["final_best_length"], n, s) for (i, n, s), run in runs.items() if i == "berlin52")
     print(f"berlin52 shortest tours: {berlin[:3]} (tie for best: {berlin[0][0] == berlin[1][0]})")
 

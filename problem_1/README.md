@@ -199,7 +199,7 @@ Since every global minimum is 0, each final objective value is the run's objecti
 | Parameter pilots | Choosing the BA settings (Part A: eil51/kroA100/ch150; Part B: D = 20) | 100–104 |
 | Post-hoc robustness check (Part A) | Checking the chosen setting on pr76/rat99/ch130; did not change anything | 200–204 |
 | Post-hoc diagnostics (Part B) | Explaining the Part B results (below) | 300–309 (probe 306) |
-| Automated tests | | various, not 0–9 for algorithm runs |
+| Automated tests | Correctness checks only (budgets, validity, reproducibility); not used to choose settings or report results | various, including 0–9 |
 
 ## Supplementary diagnostics for Part B (post hoc; not part of the required experiments)
 
