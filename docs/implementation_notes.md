@@ -103,3 +103,11 @@ a hill climber.
 Measured on the development machine (Apple M2, Python 3.11.1): 0.52–1.15 s per run, with group
 means (instance × neighbourhood) of 0.54–0.77 s. The total search time for all 120 runs was 71.2 s. Runtime hardly changes with instance size: per evaluation, the Python overhead
 of creating and copying a candidate dominates the cost of summing 51–150 distances.
+
+### 9. Reproducibility check (performed 2026-11-19)
+
+1. Cloned the GitHub repository into an empty folder, created a fresh virtual environment, and ran
+   `pip install -r requirements.txt` (numpy 1.26.4, matplotlib 3.9.2, pytest 8.3.3). All 94 tests passed.
+2. Re-ran all 120 runs with `--overwrite`. All 120 result files were **identical** to the committed
+   ones in every field except `runtime_seconds`.
+3. The regenerated summary table differed only in the "Mean runtime" column.
