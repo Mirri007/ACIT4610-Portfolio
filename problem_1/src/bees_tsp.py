@@ -27,16 +27,21 @@ from src.tsp_tour import (
 
 # BA settings for Part A. The SAME settings are used for both neighbourhood versions and
 # all six instances (assignment: "Use the same BA settings and seed list for the two
-# neighborhood versions"). See docs/implementation_notes.md for why these values were chosen.
-#   n=50 scouts, m=10 selected sites, e=3 elite sites, nep=40, nsp=20
-#   -> 3*40 + 7*20 + (50-10) = 300 evaluations per full iteration.
-#   -> 30,000 = 50 (initial) + 99 full iterations (29,700) + 250 in an incomplete 100th iteration.
+# neighborhood versions").
+#
+# Chosen with a small pilot study (experiments/tsp_pilot_settings.py, seeds 100-104, which
+# are NOT the experiment seeds). Concentrating recruited bees on few sites gave clearly
+# smaller gaps within the 30,000-evaluation budget than spreading them over many sites.
+# See docs/implementation_notes.md for the pilot table and reasoning.
+#   n=6 scouts, m=2 selected sites, e=1 elite site, nep=100, nsp=50
+#   -> 1*100 + 1*50 + (6-2) = 154 evaluations per full iteration.
+#   -> 30,000 = 6 (initial) + 194 full iterations (29,876) + 118 in an incomplete 195th iteration.
 TSP_BEES_SETTINGS = BeesSettings(
-    n_scouts=50,
-    n_selected_sites=10,
-    n_elite_sites=3,
-    n_bees_elite=40,
-    n_bees_selected=20,
+    n_scouts=6,
+    n_selected_sites=2,
+    n_elite_sites=1,
+    n_bees_elite=100,
+    n_bees_selected=50,
     max_evaluations=30_000,
 )
 

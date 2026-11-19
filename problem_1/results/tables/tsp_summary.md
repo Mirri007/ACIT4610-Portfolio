@@ -1,0 +1,18 @@
+# Part A: Bees Algorithm on TSPLIB instances (10 runs per row, 30,000 evaluations per run)
+
+Tour lengths in TSPLIB distance units (rounded EUC_2D). Gap(%) = 100 * (L_BA - L*) / L*. Std = sample standard deviation (ddof = 1). Runtime = wall-clock seconds of the search.
+
+| Instance | Cities | Optimum | Neighbourhood | Runs | Mean initial best | Best | Mean | Std | Best gap (%) | Mean gap (%) | Mean runtime (s) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| eil51 | 51 | 426 | swap | 10 | 1530.7 | 538 | 569.6 | 22.4 | 26.29 | 33.71 | 0.554 |
+| eil51 | 51 | 426 | reversal | 10 | 1530.7 | 438 | 447.6 | 7.6 | 2.82 | 5.07 | 0.577 |
+| berlin52 | 52 | 7542 | swap | 10 | 28128.4 | 9551 | 10261.9 | 632.7 | 26.64 | 36.06 | 0.536 |
+| berlin52 | 52 | 7542 | reversal | 10 | 28128.4 | 7670 | 8118.6 | 324.1 | 1.7 | 7.65 | 0.572 |
+| st70 | 70 | 675 | swap | 10 | 3451.2 | 978 | 1075.6 | 59.9 | 44.89 | 59.35 | 0.574 |
+| st70 | 70 | 675 | reversal | 10 | 3451.2 | 693 | 728.3 | 21.5 | 2.67 | 7.9 | 0.572 |
+| eil76 | 76 | 538 | swap | 10 | 2382.0 | 752 | 801.5 | 42.8 | 39.78 | 48.98 | 0.548 |
+| eil76 | 76 | 538 | reversal | 10 | 2382.0 | 567 | 591.4 | 18.0 | 5.39 | 9.93 | 0.768 |
+| kroA100 | 100 | 21282 | swap | 10 | 161957.2 | 43097 | 47916.4 | 2852.8 | 102.5 | 125.15 | 0.607 |
+| kroA100 | 100 | 21282 | reversal | 10 | 161957.2 | 23685 | 25502.3 | 1143.0 | 11.29 | 19.83 | 0.608 |
+| ch150 | 150 | 6528 | swap | 10 | 51512.5 | 16174 | 17059.8 | 622.0 | 147.76 | 161.33 | 0.557 |
+| ch150 | 150 | 6528 | reversal | 10 | 51512.5 | 10403 | 10775.8 | 288.0 | 59.36 | 65.07 | 0.645 |

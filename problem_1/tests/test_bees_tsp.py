@@ -63,8 +63,8 @@ def run_small_ba(instance, seed, settings=SMALL_SETTINGS):
 # ---------------------------------------------------------------- settings
 
 def test_assignment_settings_arithmetic():
-    # 3*40 + 7*20 + 40 = 300 evaluations per full iteration.
-    assert TSP_BEES_SETTINGS.evaluations_per_iteration() == 300
+    # 1*100 + 1*50 + 4 = 154 evaluations per full iteration.
+    assert TSP_BEES_SETTINGS.evaluations_per_iteration() == 154
     assert TSP_BEES_SETTINGS.max_evaluations == 30_000
 
 
@@ -132,8 +132,8 @@ def test_best_so_far_never_gets_worse(eil51):
 def test_full_assignment_run_uses_exactly_30000_evaluations(eil51):
     result = run_bees_on_tsp(eil51, "reversal", seed=0, optimal_length=426)
     assert result["evaluations_used"] == 30_000
-    # 50 initial + 99 full iterations of 300 = 29,750; the 100th iteration gets the last 250.
-    assert result["iterations_started"] == 100
+    # 6 initial + 194 full iterations of 154 = 29,882; the 195th iteration gets the last 118.
+    assert result["iterations_started"] == 195
     assert result["best_so_far_history"][0][0] == 1
 
 
