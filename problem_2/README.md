@@ -18,6 +18,8 @@ All commands are run from **this folder** (`problem_2/`) after installing the de
 | `src/es_one_plus_one.py` | (1+1)-ES with the 1/5th success rule |
 | `src/es_population.py` | (μ+λ)-ES and (μ,λ)-ES: recombination, self-adaptation, survivor selection |
 | `src/run_es.py` | Runs one variant on one case with one seed; **budget, seed lists, variant labels** |
+| `src/statistics_tools.py` | Exact sign-flip test, bootstrap interval, Holm correction (used for the plus/comma comparison) |
+| `supplementary/` | Post-hoc diagnostics and supplementary analyses (**not** required results; see below) |
 | `experiments/` | Experiment, table, figure and audit scripts |
 | `tests/` | Automated tests |
 
@@ -77,6 +79,7 @@ which is what each run returns. The archive is never used to choose parents.
 | Final experiments (all 450 reported runs) | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 |
 | Preliminary smoke tests and runtime measurements | 900–904 |
 | Automated tests | ≥ 1000 |
+| Post-hoc diagnostics (supplementary) | 300–305 (310 for random-portfolio check) |
 | Parameter tuning | none needed (all parameters fixed by the assignment) |
 
 ## Commands
@@ -117,7 +120,8 @@ compared between the variants, stable single-threaded timing is used. Tests run 
 | `results/raw/es_all_runs.csv` | All 450 runs in one table, including weights |
 | `results/tables/es_summary.csv` / `.md` | Required summary: case, assets, target return, best/mean variance, std, feasible runs, mean runtime (45 rows) |
 | `results/tables/es_comparison.md` | Variants side by side per case; paired per-seed comparisons |
-| `results/tables/es_analysis.md` | Stagnation, sparsity, constraint activity, (1+1) step sizes, sign test |
+| `results/tables/es_analysis.md` | Stagnation, sparsity, constraint activity, (1+1) step sizes |
+| `results/tables/es_plus_vs_comma.md` | (μ+λ) vs (μ,λ) with the **case** as statistical unit: exact sign-flip tests, bootstrap intervals, Holm correction, limitations |
 | `results/figures/es_convergence_port5_alpha050.png` | **Required** convergence plot: mean archive best variance vs evaluations, three variants |
 | `results/figures/es_comma_population_vs_archive_port5_alpha050.png` | Supplementary: (μ,λ) population best vs archive |
 | `results/figures/es_step_sizes_port5_alpha050.png` | Supplementary: (1+1) step-size adaptation |
@@ -126,3 +130,24 @@ compared between the variants, stable single-threaded timing is used. Tests run 
 Variance is w^TΣw in squared return units (returns in the data are decimal fractions per period).
 The results describe relative performance of the ES variants on historical data only; they say
 nothing about future investment performance.
+
+## Supplementary analyses (post hoc; not part of the required experiments)
+
+Added after the critical review (`docs/critical_review.md`). They change no algorithm, setting, seed,
+required result or required figure. Outputs go to `results/supplementary/` only.
+
+| Kind | Script | What it does | Seeds |
+|---|---|---|---|
+| Supplementary analysis | `supplementary/reference_optima.py` | Minimum-variance portfolio per case: SLSQP candidate, exact KKT solve, KKT residuals, weak-duality bound, checks against all ES runs and 20,000 random portfolios; gap of each ES variant. **Numerically verified, not formally proven.** Context only: the assignment's conclusions stay relative | 310 (random check) |
+| Post-hoc diagnostic | `supplementary/one_plus_one_diagnostics.py` | Why (1+1) stagnates: association in saved data, interventions with **modified (1+1) versions (not the assignment's algorithm)**, success-probability probe, step-size vs dimension decomposition | 300–305 |
+
+Setup and commands (from `problem_2/`; the reference optima need SciPy):
+
+```bash
+python -m pip install -r ../requirements-supplementary.txt   # adds scipy==1.17.1
+python -m supplementary.reference_optima          # about 30 s; run this first
+python -m supplementary.one_plus_one_diagnostics  # about 3 minutes; uses the reference optima
+```
+
+Outputs: `results/supplementary/reference_optima.md/.csv`, `reference_optima_weights.json`,
+`one_plus_one_diagnostics.md/.json`.

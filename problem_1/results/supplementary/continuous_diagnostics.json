@@ -1,0 +1,326 @@
+{
+ "A": [
+  {
+   "function": "sphere",
+   "dimension": 10,
+   "mean_improvement_probability": 5e-05,
+   "max_improvement_probability": 0.00025,
+   "rms_distance_to_optimum": 0.20485873892340384,
+   "neighbour_coordinate_std": 0.5912066756501768,
+   "median_late_improvement_share": 0.0004578660949007845
+  },
+  {
+   "function": "sphere",
+   "dimension": 30,
+   "mean_improvement_probability": 7.500000000000001e-05,
+   "max_improvement_probability": 0.0005,
+   "rms_distance_to_optimum": 0.42716861221361846,
+   "neighbour_coordinate_std": 0.5912066756501768,
+   "median_late_improvement_share": 0.0026135212449064846
+  },
+  {
+   "function": "rosenbrock",
+   "dimension": 10,
+   "mean_improvement_probability": 5e-05,
+   "max_improvement_probability": 0.00025,
+   "rms_distance_to_optimum": 0.946845895221222,
+   "neighbour_coordinate_std": 0.8660254037844387,
+   "median_late_improvement_share": 3.2270936793024196e-06
+  },
+  {
+   "function": "rosenbrock",
+   "dimension": 30,
+   "mean_improvement_probability": 0.0001,
+   "max_improvement_probability": 0.0005,
+   "rms_distance_to_optimum": 1.1898456740691346,
+   "neighbour_coordinate_std": 0.8660254037844387,
+   "median_late_improvement_share": 0.00013382237739776866
+  },
+  {
+   "function": "rastrigin",
+   "dimension": 10,
+   "mean_improvement_probability": 2.5e-05,
+   "max_improvement_probability": 0.00025,
+   "rms_distance_to_optimum": 1.2096635690432944,
+   "neighbour_coordinate_std": 0.5912066756501768,
+   "median_late_improvement_share": 0.029797417153860688
+  },
+  {
+   "function": "rastrigin",
+   "dimension": 30,
+   "mean_improvement_probability": 7.500000000000001e-05,
+   "max_improvement_probability": 0.00025,
+   "rms_distance_to_optimum": 1.9955007125356872,
+   "neighbour_coordinate_std": 0.5912066756501768,
+   "median_late_improvement_share": 0.05218361949814679
+  },
+  {
+   "function": "ackley",
+   "dimension": 10,
+   "mean_improvement_probability": 0.0,
+   "max_improvement_probability": 0.0,
+   "rms_distance_to_optimum": 1.3652310939906815,
+   "neighbour_coordinate_std": 3.783722724161132,
+   "median_late_improvement_share": 0.0
+  },
+  {
+   "function": "ackley",
+   "dimension": 30,
+   "mean_improvement_probability": 0.0001,
+   "max_improvement_probability": 0.0005,
+   "rms_distance_to_optimum": 2.9165436414007595,
+   "neighbour_coordinate_std": 3.783722724161132,
+   "median_late_improvement_share": 0.027901163915002004
+  }
+ ],
+ "B": [
+  {
+   "function": "sphere",
+   "dimension": 10,
+   "settings": {
+    "A (n50 m10 e3 nep40 nsp20, explorative)": {
+     "mean": 0.4780342628573787,
+     "ratio_to_current": 1.1423507700555402,
+     "difference_in_current_std": 0.9402397729055639
+    },
+    "C (n10 m3 e1 nep100 nsp50, CURRENT)": {
+     "mean": 0.41846539205653716,
+     "ratio_to_current": 1.0,
+     "difference_in_current_std": 0.0
+    },
+    "D (n6 m2 e1 nep100 nsp50)": {
+     "mean": 0.414270948625662,
+     "ratio_to_current": 0.9899766061650602,
+     "difference_in_current_std": -0.06620542719529914
+    },
+    "E (n2 m1 e1 nep200 nsp1, extreme local search)": {
+     "mean": 0.41136059760583354,
+     "ratio_to_current": 0.9830217872599039,
+     "difference_in_current_std": -0.1121426381105062
+    },
+    "G (n100 m5 e1 nep20 nsp10, many scouts)": {
+     "mean": 0.5156567410551123,
+     "ratio_to_current": 1.232256599574294,
+     "difference_in_current_std": 1.5340759474244503
+    }
+   }
+  },
+  {
+   "function": "sphere",
+   "dimension": 30,
+   "settings": {
+    "A (n50 m10 e3 nep40 nsp20, explorative)": {
+     "mean": 6.075223223584205,
+     "ratio_to_current": 1.080102407913458,
+     "difference_in_current_std": 1.0638995608653468
+    },
+    "C (n10 m3 e1 nep100 nsp50, CURRENT)": {
+     "mean": 5.624673344928766,
+     "ratio_to_current": 1.0,
+     "difference_in_current_std": 0.0
+    },
+    "D (n6 m2 e1 nep100 nsp50)": {
+     "mean": 5.364757488129264,
+     "ratio_to_current": 0.9537900530643538,
+     "difference_in_current_std": -0.6137486192120462
+    },
+    "E (n2 m1 e1 nep200 nsp1, extreme local search)": {
+     "mean": 5.468595351762402,
+     "ratio_to_current": 0.9722511897856104,
+     "difference_in_current_std": -0.3685525537948891
+    },
+    "G (n100 m5 e1 nep20 nsp10, many scouts)": {
+     "mean": 7.264127436688211,
+     "ratio_to_current": 1.291475431766644,
+     "difference_in_current_std": 3.871301649191366
+    }
+   }
+  },
+  {
+   "function": "rosenbrock",
+   "dimension": 10,
+   "settings": {
+    "A (n50 m10 e3 nep40 nsp20, explorative)": {
+     "mean": 93.97172041326189,
+     "ratio_to_current": 0.8774800220403101,
+     "difference_in_current_std": -0.18459176436085695
+    },
+    "C (n10 m3 e1 nep100 nsp50, CURRENT)": {
+     "mean": 107.09271784303367,
+     "ratio_to_current": 1.0,
+     "difference_in_current_std": 0.0
+    },
+    "D (n6 m2 e1 nep100 nsp50)": {
+     "mean": 82.2226039777224,
+     "ratio_to_current": 0.7677702614498633,
+     "difference_in_current_std": -0.3498833242537317
+    },
+    "E (n2 m1 e1 nep200 nsp1, extreme local search)": {
+     "mean": 124.95192790773368,
+     "ratio_to_current": 1.166764000619317,
+     "difference_in_current_std": 0.2512509520392071
+    },
+    "G (n100 m5 e1 nep20 nsp10, many scouts)": {
+     "mean": 101.21213726477875,
+     "ratio_to_current": 0.9450888846907955,
+     "difference_in_current_std": -0.08273050507145366
+    }
+   }
+  },
+  {
+   "function": "rosenbrock",
+   "dimension": 30,
+   "settings": {
+    "A (n50 m10 e3 nep40 nsp20, explorative)": {
+     "mean": 2821.6768980765164,
+     "ratio_to_current": 1.0094382715423942,
+     "difference_in_current_std": 0.056076231863734706
+    },
+    "C (n10 m3 e1 nep100 nsp50, CURRENT)": {
+     "mean": 2795.294152821322,
+     "ratio_to_current": 1.0,
+     "difference_in_current_std": 0.0
+    },
+    "D (n6 m2 e1 nep100 nsp50)": {
+     "mean": 2339.8016172410544,
+     "ratio_to_current": 0.8370502313251957,
+     "difference_in_current_std": -0.9681443227508871
+    },
+    "E (n2 m1 e1 nep200 nsp1, extreme local search)": {
+     "mean": 2237.6794974711715,
+     "ratio_to_current": 0.8005166451668982,
+     "difference_in_current_std": -1.1852037534977504
+    },
+    "G (n100 m5 e1 nep20 nsp10, many scouts)": {
+     "mean": 3252.496645840062,
+     "ratio_to_current": 1.1635614958652134,
+     "difference_in_current_std": 0.9717788182845928
+    }
+   }
+  },
+  {
+   "function": "rastrigin",
+   "dimension": 10,
+   "settings": {
+    "A (n50 m10 e3 nep40 nsp20, explorative)": {
+     "mean": 36.768973057375355,
+     "ratio_to_current": 1.0044121364241951,
+     "difference_in_current_std": 0.05011327046600838
+    },
+    "C (n10 m3 e1 nep100 nsp50, CURRENT)": {
+     "mean": 36.60745596750401,
+     "ratio_to_current": 1.0,
+     "difference_in_current_std": 0.0
+    },
+    "D (n6 m2 e1 nep100 nsp50)": {
+     "mean": 32.22148466729236,
+     "ratio_to_current": 0.8801891258407843,
+     "difference_in_current_std": -1.3608180174539537
+    },
+    "E (n2 m1 e1 nep200 nsp1, extreme local search)": {
+     "mean": 44.020824675881954,
+     "ratio_to_current": 1.2025098033296469,
+     "difference_in_current_std": 2.3001166715120163
+    },
+    "G (n100 m5 e1 nep20 nsp10, many scouts)": {
+     "mean": 36.492216690566536,
+     "ratio_to_current": 0.9968520271651827,
+     "difference_in_current_std": -0.03575483596240389
+    }
+   }
+  },
+  {
+   "function": "rastrigin",
+   "dimension": 30,
+   "settings": {
+    "A (n50 m10 e3 nep40 nsp20, explorative)": {
+     "mean": 266.3301861671947,
+     "ratio_to_current": 0.9928310939688612,
+     "difference_in_current_std": -0.06793112089774068
+    },
+    "C (n10 m3 e1 nep100 nsp50, CURRENT)": {
+     "mean": 268.2532686426396,
+     "ratio_to_current": 1.0,
+     "difference_in_current_std": 0.0
+    },
+    "D (n6 m2 e1 nep100 nsp50)": {
+     "mean": 278.6906630584419,
+     "ratio_to_current": 1.0389087315454362,
+     "difference_in_current_std": 0.3686913644997106
+    },
+    "E (n2 m1 e1 nep200 nsp1, extreme local search)": {
+     "mean": 271.1639821798294,
+     "ratio_to_current": 1.01085061722423,
+     "difference_in_current_std": 0.10281828040047261
+    },
+    "G (n100 m5 e1 nep20 nsp10, many scouts)": {
+     "mean": 279.33921983013937,
+     "ratio_to_current": 1.04132643469209,
+     "difference_in_current_std": 0.39160103635714744
+    }
+   }
+  },
+  {
+   "function": "ackley",
+   "dimension": 10,
+   "settings": {
+    "A (n50 m10 e3 nep40 nsp20, explorative)": {
+     "mean": 6.109265957626804,
+     "ratio_to_current": 1.013482220405569,
+     "difference_in_current_std": 0.1687874866073883
+    },
+    "C (n10 m3 e1 nep100 nsp50, CURRENT)": {
+     "mean": 6.027995197766801,
+     "ratio_to_current": 1.0,
+     "difference_in_current_std": 0.0
+    },
+    "D (n6 m2 e1 nep100 nsp50)": {
+     "mean": 6.297926122689961,
+     "ratio_to_current": 1.0447795520844412,
+     "difference_in_current_std": 0.5606070677064039
+    },
+    "E (n2 m1 e1 nep200 nsp1, extreme local search)": {
+     "mean": 6.012745407818376,
+     "ratio_to_current": 0.997470172180284,
+     "difference_in_current_std": -0.0316715842342208
+    },
+    "G (n100 m5 e1 nep20 nsp10, many scouts)": {
+     "mean": 6.394233019005688,
+     "ratio_to_current": 1.0607561567690977,
+     "difference_in_current_std": 0.7606224114793857
+    }
+   }
+  },
+  {
+   "function": "ackley",
+   "dimension": 30,
+   "settings": {
+    "A (n50 m10 e3 nep40 nsp20, explorative)": {
+     "mean": 10.8212336491836,
+     "ratio_to_current": 1.0427489481289662,
+     "difference_in_current_std": 1.011383528623468
+    },
+    "C (n10 m3 e1 nep100 nsp50, CURRENT)": {
+     "mean": 10.377602076319947,
+     "ratio_to_current": 1.0,
+     "difference_in_current_std": 0.0
+    },
+    "D (n6 m2 e1 nep100 nsp50)": {
+     "mean": 9.983040359891595,
+     "ratio_to_current": 0.9619794906832398,
+     "difference_in_current_std": -0.8995149250652754
+    },
+    "E (n2 m1 e1 nep200 nsp1, extreme local search)": {
+     "mean": 10.424665936848982,
+     "ratio_to_current": 1.0045351382894538,
+     "difference_in_current_std": 0.10729536904968408
+    },
+    "G (n100 m5 e1 nep20 nsp10, many scouts)": {
+     "mean": 10.901366076624582,
+     "ratio_to_current": 1.0504706189785193,
+     "difference_in_current_std": 1.1940680402313286
+    }
+   }
+  }
+ ]
+}

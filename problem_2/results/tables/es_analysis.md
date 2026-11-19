@@ -8,4 +8,4 @@
 
 (1+1)-ES success rate: mean 0.188, min 0.142, max 0.199; runs ending with step size below 1e-7: 126/150.
 
-Sign test (μ+λ)-ES vs (μ,λ)-ES over 150 seed pairs: (μ+λ) lower in 66, (μ,λ) lower in 84; two-sided p = 0.165.
+The comparison of (μ+λ) and (μ,λ) is in es_plus_vs_comma.md (case-level analysis).

@@ -354,3 +354,30 @@ KKT certificate on a 2-asset problem with a known solution. Worth it if R1–R2 
   - interpretation choices in Problem 2 (distinct parents, repaired weights stored, tie-breaking, no
     selection after the final partial batch);
   - single-threaded timing.
+
+---
+
+## 6. Implementation status (added after instruction S8)
+
+The student approved R1–R7 (not R8). Implemented as documented, tested scripts. The numbers in
+sections 2.1–2.3 above come from the temporary review scripts; the official, reproducible numbers are
+in the files listed below.
+
+| Recommendation | Status | Official output |
+|---|---|---|
+| R1 case-level statistics | Done; the pooled sign test was removed from the tables | `problem_2/results/tables/es_plus_vs_comma.md` (identical to section 2.3) |
+| R2 reference optima | Done; adds a weak-duality bound and a 20,000-portfolio random check to the KKT certificate | `problem_2/results/supplementary/reference_optima.md` (identical V\*) |
+| R3 (1+1) diagnostics | Done; extended from 3 to all 5 datasets for the step-size vs dimension decomposition | `problem_2/results/supplementary/one_plus_one_diagnostics.md` |
+| R4 1B diagnostics | Done; the non-compliant sweep has its own file | `problem_1/results/supplementary/continuous_diagnostics.md`, `NONCOMPLIANT_neighbourhood_size_sweep.md` |
+| R5 documentation | Done; superseded statements are kept with revision notes | `docs/implementation_notes.md`, `docs/oral_exam_preparation.md`, READMEs |
+| R6 Part A paired table | Done (60/60) | `problem_1/results/tables/tsp_paired_comparison.md` |
+| R7 tests | Done (Problem 1: 171 tests, Problem 2: 137 tests) | `problem_*/tests/test_supplementary.py`, `problem_2/tests/test_statistics_tools.py` |
+| R8 hygiene | Not approved; not implemented | – |
+
+Differences from the review's preliminary numbers:
+- **1B Evidence A:** the official script draws neighbours in a fixed, sorted order with its own probe
+  seed (306). The improvement probabilities therefore differ slightly: mean ≤ 0.00010 and max 0.0005,
+  instead of the review's "0.0000–0.0002". The conclusion is unchanged.
+- **1B Evidence B and C:** reproduced exactly.
+- **The (1+1) intervention on port1/port3/port5 and the probe on those cases:** reproduced exactly;
+  port2 and port4 were added.

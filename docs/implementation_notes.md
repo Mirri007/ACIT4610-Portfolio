@@ -266,6 +266,31 @@ The same reasoning explains why **D = 30 is much harder than D = 10** for every 
 changes all D coordinates at once, so its expected size grows with D, while the chance that all
 coordinates move in helpful directions shrinks.
 
+#### 5b. Empirical evidence (post-hoc diagnostics, added after the critical review)
+
+`supplementary/continuous_diagnostics.py`, outputs in `results/supplementary/`. Diagnostic seeds
+300–309; the required results are unchanged.
+
+- **Frozen final solutions (compliant).** At the saved final vectors, one assignment neighbour
+  improves with probability ≤ 0.0001 on average (max 0.0005). For Sphere and Ackley, the remaining
+  RMS distance to the optimum per coordinate (Sphere D10: 0.205; Ackley D10: 1.37) is smaller than
+  the neighbour's per-coordinate standard deviation (0.591; 3.78). For the unimodal functions,
+  0.00–0.26 % of the total improvement happens after evaluation 15,000.
+- **Settings sensitivity (compliant, D = 10 and 30).** Five settings, from explorative to extreme
+  local search, differ mostly within about ±1.5 standard deviations of the current setting, without a
+  consistent direction (best case: D on Rosenbrock D10, 0.77×; worst: many scouts on Sphere D30,
+  1.29×, +3.9 sd). This confirms the pilot at the experiment dimensions: **the settings are not the
+  bottleneck.**
+- **Neighbourhood size (NOT assignment-compliant, explanatory only).** With ±1 % instead of ±10 %,
+  Sphere improves about 87× (D10: 0.42 → 0.0048) and Rosenbrock D30 about 29×. But Ackley D10 gets
+  worse (6.0 → 16.9) and Rastrigin D10 too (36.6 → 45.0): small steps cannot leave local minima or the
+  flat outer region. **No single fixed size suits all functions**, which is the motivation for
+  neighbourhood shrinking in later BA versions. The assignment fixes ±10 %, so this was not used.
+
+**Conclusion:** the weak Part B results are explained mainly by the assignment-specified fixed
+neighbourhood. No compliant change (settings) gives a consistent improvement, so the algorithm and
+settings were kept unchanged.
+
 ### 6. Runtime
 
 Measured on an Apple M2 with Python 3.11.1: single runs took 0.21–1.12 s, group means (function × D) were 0.22–0.47 s, and the total search time for all 80 runs was 27.5 s.
@@ -365,14 +390,26 @@ No parameter was tuned: μ, λ, the initial step sizes, the step-size bounds, th
 - All 450 final allocations are feasible (10/10 valid runs in every case), and no invalid candidate
   was ever evaluated.
 - **(1+1)-ES is worst in all 150 paired comparisons** against both population variants.
-- **(μ+λ) vs (μ,λ):** the lowest mean in 7 vs 8 cases; (μ,λ) is lower in 84 of 150 seed pairs.
-  A two-sided sign test gives p = 0.165, so this is **not a significant difference**. Per case, the
-  difference in mean variance is at most 5 %. On port1 both reach practically the same value.
+- **(μ+λ) vs (μ,λ):** the lowest mean in 7 vs 8 cases. With the **case as the statistical unit**
+  (`es_plus_vs_comma.md`):
+  - the mean of the 15 case-mean relative differences is +0.005 % (95 % bootstrap interval −1.31 %
+    to +1.39 %);
+  - an exact sign-flip test gives p = 0.994, so there is **no evidence of an overall difference**;
+  - this does **not** show the variants are equivalent;
+  - within cases the direction varies: (μ+λ) is lower on all three port4 cases, (μ,λ) on port5 at
+    α = 0.25 and 0.50. After the Holm correction, only the two port1 cases with α ≥ 0.50 remain
+    significant, and there the difference is 0.001 % (both reach the reference optimum).
+
+  *Revision note:* the first version of this section reported a sign test over the 150 seed pairs
+  (p = 0.165). It was replaced after the critical review (section "Post-hoc review" below), because
+  pairs from the same case are not independent.
 - **Convergence (port5_alpha050):**
   - The population variants improve steeply up to about 5,000 evaluations, then slowly.
   - (1+1) improves faster in the first ~1,500 evaluations but flattens by ~5,000.
 
-### 7. Why the (1+1)-ES stagnates (evidence from `es_analysis.md`)
+### 7. Why the (1+1)-ES stagnates
+
+#### 7a. Explanation as first written (before the post-hoc diagnostics), kept for the chronology
 
 **Observations:**
 - **Step size collapse.** Its success rate averaged 18.8 % (range 14.2–19.9 %), i.e. slightly
@@ -395,18 +432,58 @@ No parameter was tuned: μ, λ, the initial step sizes, the step-size bounds, th
 - The population ES has a separate step size per weight, recombination (averaging two sparse
   parents), and selection among 70 children. That lets it keep moving weights to 0.
 
+#### 7b. Corrected explanation after the post-hoc diagnostics (`results/supplementary/one_plus_one_diagnostics.md`)
+
+The diagnostics used diagnostic versions of (1+1) (a higher σ floor or a fixed σ) with seeds 300–304,
+a probe of the success probability at the saved stagnated solutions, and the numerically verified
+reference optima. **The problem is convex, so there are no local optima: the stagnation must come
+from the search dynamics.** Two effects can be distinguished.
+
+1. **Step-size adaptation (the 1/5 rule) — confirmed as a cause.**
+   - At the stagnated solutions, the probability that one mutation improves stays **below 0.2 at
+     every tested σ** (10⁻⁸ to 10⁻²; at most 0.181), on all five datasets. So the 1/5 rule is
+     *forced* to keep shrinking σ.
+   - On a smooth function with no active constraints, tiny steps would succeed about half the time;
+     here 0.10–0.18. This is consistent with the kinks created by the repair.
+   - Preventing the collapse removes **80–100 % of the gap** to the optimum for n ≤ 98 (e.g. port1:
+     25.8 % → 0.02 %; port4: 94.0 % → 17.1 %). There, (1+1) then performs roughly like the
+     population ES.
+2. **Difficulty of searching with one isotropic step size in many dimensions — a second cause that
+   dominates for n = 225.**
+   - On port5, preventing the collapse removes only 38 % of the gap (122.6 % → 76.4 %, against
+     15.0 % for the population ES).
+   - At the stagnated port5 point (120 % above the optimum), not one of 3,000 mutations with
+     σ ≥ 10⁻⁶ improved, although improving directions must exist in a convex problem. A single σ
+     shared by 225 weights almost never produces one.
+   - The population ES avoid this with per-weight step sizes, recombination and 70 children per
+     generation.
+
+**Caveats:**
+- the datasets differ in more than their size;
+- the "collapse prevented" value is the best of three diagnostic versions chosen afterwards (optimistic);
+- 5 seeds per setting;
+- the diagnostic versions are not the assignment's algorithm.
+
+The sparsity observation (7a) still holds: the reference optima hold 3–27 assets, while (1+1) holds
+about 20 (port1) to 111 (port5).
+
 ### 8. Limitations and weaknesses (to mention in the report)
 
-1. **No absolute quality measure.** The assignment limits conclusions to relative performance, and
-   no exact optimum (e.g. from a quadratic-programming solver) was computed, so we cannot say how far
-   any variant is from the true minimum variance. (This is a candidate for the planned critical review.)
+1. **Absolute quality (originally missing, now supplementary).** The assignment limits conclusions
+   to relative performance. After the critical review, numerically verified reference optima were
+   added as **supplementary context** (`results/supplementary/reference_optima.md`): population ES
+   0.00–18.4 % above the optimum on average, (1+1) 14.8–137.5 %. These numbers are context for
+   stagnation and problem size, not a change to the required comparison.
 2. **Interpretation choices** in section 3 (distinct parents, tie-breaking, Lamarckian repair, no
    selection after the last partial batch) could slightly change results under other readings.
 3. **Comparisons with (1+1) are not paired.** (1+1) starts from a single random portfolio, while the
    population variants start from 10, so their initial best values differ. The 150/150 result makes
    this immaterial for the conclusion.
-4. **The sign test** treats the 150 seed pairs as independent, although they come from only 15
-   cases; it is a rough check, not a full statistical analysis.
+4. **Statistical comparison of plus and comma.** The original pooled sign test was replaced by a
+   case-level analysis. Remaining limitations:
+   - only 15 cases (fixed benchmarks, not a random sample) and 10 seeds per case;
+   - approximate bootstrap intervals;
+   - no equivalence margin defined, so equivalence cannot be claimed.
 5. **Runtime** is from one machine (Apple M2), single-threaded. Absolute times will differ elsewhere;
    ratios between the variants are more meaningful.
 6. **Feasible-run rate is 10/10 everywhere.** The repair guarantees feasibility by construction, so
@@ -422,3 +499,57 @@ No parameter was tuned: μ, λ, the initial step sizes, the step-size bounds, th
    every field except `runtime_seconds`.
 3. The regenerated comparison and analysis tables were identical.
 4. `audit_es_results` and `audit_es_trace` both passed.
+
+
+---
+
+## Post-hoc review, diagnostics and supplementary analyses (2026-11-19, after all final experiments)
+
+**Chronology.** All required experiments (120 + 80 + 450 runs) were finished, audited and reproduced
+first. Then:
+1. The student requested a critical review (S7). It used temporary scripts, and its findings are in
+   `docs/critical_review.md`.
+2. The student approved recommendations R1–R7 (S8). They were implemented as documented scripts
+   with tests.
+
+**No algorithm, setting, seed, final result or required figure was changed. No correctness error was
+found.**
+
+| Category | Purpose | Seeds | Location |
+|---|---|---|---|
+| Required experiments | Results of the portfolio | 0–9 | `problem_*/experiments/run_*`, `results/raw`, `tables`, `figures` |
+| Parameter pilots (before the final runs) | Choose BA settings | 100–104 | `problem_1/experiments/*pilot*` |
+| Post-hoc robustness check (Part A) | Check the chosen setting on other instances | 200–204 | `problem_1/experiments/tsp_robustness_pilot.py` |
+| Post-hoc diagnostics | Explain results (1B neighbourhood, (1+1) stagnation) | 300–310 | `problem_*/supplementary/` |
+| Supplementary analysis | Reference optima for Problem 2 (context only) | 310 (random check) | `problem_2/supplementary/reference_optima.py` |
+| Preliminary checks (Problem 2) | Smoke test, timing | 900–904 | not saved as results |
+| Tests | | ≥ 1000 (P2), various (P1) | `tests/` |
+
+**What was added:**
+- **R1:** case-level statistics for (μ+λ) vs (μ,λ) (`src/statistics_tools.py`, `es_plus_vs_comma.md`),
+  replacing the pooled sign test.
+- **R2:** numerically verified reference optima (`reference_optima.md`): KKT residuals ≤ 2.2e−16,
+  relative duality gaps at rounding level (|gap| ≤ 1.6e−15, three of them slightly negative because of
+  rounding). Not beaten by any ES run or 20,000 random portfolios. Not a formal proof (floating point).
+- **R3:** (1+1) diagnostics (`one_plus_one_diagnostics.md`); the explanation was corrected in Problem 2 §7b.
+- **R4:** Part B diagnostics (`continuous_diagnostics.md`; the non-compliant sweep is in
+  `NONCOMPLIANT_neighbourhood_size_sweep.md`); see Problem 1B §5b.
+- **R6:** paired swap-vs-reversal table (`tsp_paired_comparison.md`): reversal shorter in 60/60 pairs.
+- **R7:** tests for all new analysis functions, among them:
+  - the diagnostic (1+1) and the 10 % diagnostic neighbourhood reproduce the official algorithms
+    exactly;
+  - the KKT solve matches two analytically solved problems;
+  - the certificate rejects a wrong support.
+
+  Totals now: 171 tests (Problem 1) and 137 tests (Problem 2).
+- **Fixes made during this work (test hygiene; no effect on any result):**
+  - the new paired-comparison function averaged an empty list (a warning) when given results
+    for only some instances; it now uses only the instances present;
+  - running the tests with warnings treated as errors revealed that the independent parser in
+    `problem_2/tests/test_portfolio_data.py` (written with the original Problem 2 code) left data
+    files open (`ResourceWarning`); it now uses `with open(...)`.
+
+  Both test suites now pass with `-W error`.
+
+Dependency: SciPy 1.17.1 (`requirements-supplementary.txt`) is needed only to *find* the
+reference-optimum candidates; all checks use NumPy.

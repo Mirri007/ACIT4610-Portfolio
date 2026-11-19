@@ -45,6 +45,18 @@ python -m experiments.make_es_tables
 python -m experiments.make_es_plots
 ```
 
+## Kinds of work in this repository
+
+| Kind | Where | Status |
+|---|---|---|
+| Required experiments, tables and figures | `problem_*/experiments/`, `problem_*/results/{raw,convergence,tables,figures}/` | The assignment's results |
+| Parameter pilots | `problem_1/experiments/*pilot*.py` | Chose the BA settings before the final runs |
+| Audits | `problem_*/experiments/audit_*.py` | Independent re-checks of saved results |
+| Post-hoc diagnostics and supplementary analyses | `problem_*/supplementary/`, `problem_*/results/supplementary/` | Added after the critical review; explain results, never replace them |
+
+Supplementary analyses need one extra package: `python -m pip install -r requirements-supplementary.txt`
+(SciPy, used only for a reference solver in Problem 2). See `docs/critical_review.md` and the problem READMEs.
+
 ## Data sources
 
 All original data files are included unmodified.

@@ -354,6 +354,8 @@ Every saved tour was re-verified: valid permutation, recomputed length matches, 
 - **Improvement from initial solutions:** large in every case, e.g. berlin52 from a mean initial best
   of 28,128 down to 8,119 (reversal).
 - **Swap vs reversal:** reversal is better on every instance, both in mean gap and in consistency.
+  For the same seed both start from the identical initial population, and **reversal ended shorter in
+  60 of 60 paired runs** (`tsp_paired_comparison.md`).
   Its standard deviation is lower (berlin52: 324 vs 633).
 - **Larger instances:** the gap grows with size (reversal: 5 % on eil51 → 65 % on ch150). The number
   of possible moves grows roughly with n², but the budget is fixed. The ch150 convergence curve is
@@ -500,6 +502,14 @@ n, m, e, nep, nsp as in Part A; the neighbourhood size is fixed at 10 % by the a
    D·a²/3 ≈ 0.35·D, about 3.5 for D = 10. Once the site is closer to 0 than a typical step is
    long, almost every random step lands further away. Sphere's mean final values (0.43 at D = 10,
    5.5 at D = 30) show this ceiling. Later BA versions shrink the neighbourhood to fix exactly this.
+
+   **Measured (post-hoc diagnostics):**
+   - At the final solutions, one neighbour improves with probability ≤ 0.0001 on average.
+   - The remaining distance to the optimum is smaller than one neighbourhood step (Sphere D10: 0.21
+     per coordinate vs a step spread of 0.59).
+   - The unimodal functions make almost no progress after evaluation 15,000.
+   - In an explanatory run that breaks the ±10 % rule, a ±1 % neighbourhood made Sphere about 87×
+     better but Ackley and Rastrigin worse. So no fixed size fits all four functions.
 2. **Why is D = 30 so much harder?**
    Each recruit changes all 30 coordinates at once. The step is longer and it is much less likely
    that all coordinates move in a helpful direction. The search space is also vastly larger for the
@@ -519,6 +529,10 @@ n, m, e, nep, nsp as in Part A; the neighbourhood size is fixed at 10 % by the a
    settings matter little here. Before the pilot, one timing run per case with seed 0 was seen;
    it was not used for selection.
 
+   **Confirmed later:** a post-hoc sensitivity check at D = 10 and 30 with new seeds (300–309) and
+   five very different settings found no consistent improvement (mostly within ±1.5 standard
+   deviations). So changing the settings would be tuning on noise.
+
 ### 8. Common mistakes
 - Using 10 % of the upper bound instead of the range.
 - Changing only one coordinate.
@@ -528,6 +542,10 @@ n, m, e, nep, nsp as in Part A; the neighbourhood size is fixed at 10 % by the a
 ---
 
 ## Component 8: Part B results (what the numbers say)
+
+> Note: the explanation of the weak results is supported by measurements in
+> `problem_1/results/supplementary/continuous_diagnostics.md`. Runs outside the ±10 % rule are in a
+> separate file marked NONCOMPLIANT and are **not results**.
 
 From `results/tables/continuous_summary.md` (10 runs each):
 
@@ -575,6 +593,9 @@ From `results/tables/continuous_summary.md` (10 runs each):
 | **Self-adaptation** | Each individual carries its own σ values, which are mutated and inherited; good σ survive with good solutions. |
 | **Plus / comma selection** | Survivors chosen from parents + children (plus), or children only (comma). |
 | **Archive** | A separate record of the best valid solution ever evaluated. |
+| **Convex problem** | Every straight line between two feasible points stays feasible, and the objective curves upwards; there are no local optima besides the global one. |
+| **KKT conditions** | Optimality conditions (balance of marginal risk and constraint "prices"). For a convex problem, a point satisfying them is the global optimum. |
+| **Duality gap** | Difference between a solution's value and a guaranteed lower bound; about 0 means the solution is (numerically) optimal. |
 
 ---
 
@@ -724,12 +745,20 @@ Four failures and one success: 0.01 × 0.92⁴ × 1.3956 ≈ 0.0100. Unchanged o
 σ₀ = 0.1/√n, factors e^(1/3) and e^(−1/12), bounds [1e−8, 1].
 
 ### 7. Likely questions
-1. **Why does the (1+1)-ES perform worst everywhere?**
-   - Its success rate stayed slightly below 1/5 (18.8 % on average), so σ shrank throughout.
-     126/150 runs ended with σ < 10⁻⁷.
-   - It reached within 1 % of its final value after a median of 3,890 evaluations and then stagnated.
-   - Its portfolios keep about 68 assets, while the population ES finds sparse portfolios with about
-     15 assets. With one tiny σ, small weights can no longer be pushed to 0.
+1. **Why does the (1+1)-ES perform worst everywhere?** (Answer updated after the post-hoc diagnostics.)
+   - **Observation:** its success rate stayed slightly below 1/5 (18.8 %), σ shrank throughout
+     (126/150 runs end with σ < 10⁻⁷), and it was within 1 % of its final value after a median of
+     3,890 evaluations.
+   - **No local optima:** the problem is convex, so the stagnation is caused by how it searches.
+   - **Cause 1, step-size adaptation:** at the stagnated points, no step size gives 20 % success
+     (at most 0.181), so the 1/5 rule must shrink σ. Preventing the collapse removed 80–100 % of the
+     gap for n ≤ 98 (port1: 25.8 % → 0.02 %).
+   - **Cause 2, high dimension:** for port5 (225 assets) it removed only 38 % (122.6 % → 76.4 %).
+     One shared σ for 225 weights almost never produces an improving mutation (0 of 3,000 for
+     σ ≥ 10⁻⁶ at the stagnated point).
+   - **Consequence:** its portfolios stay too spread out (about 68 assets vs 3–27 in the optimum).
+   - **Caveat:** the diagnostics use modified (1+1) versions and 5 seeds; this is strong evidence,
+     not proof.
 2. **Why σ₀ = 0.1/√n?**
    A mutation changes all n weights. Its total length grows like σ·√n, so dividing by √n keeps the
    initial total step about 0.1 for any n.
@@ -740,9 +769,11 @@ Four failures and one success: 0.01 × 0.92⁴ × 1.3956 ≈ 0.0100. Unchanged o
    (candidate − parent)/σ was checked to be standard normal: mean −0.0002, std 0.9997 on port5.
    Planted bugs in the factors, σ₀ or the acceptance rule were all caught.
 5. **Is the step-size collapse a bug?**
-   No. The trace confirms the rules are followed exactly. It is a known weakness of the 1/5 rule on
-   constrained problems: near constraint boundaries, smaller steps do not raise the success rate
-   enough.
+   No. The trace confirms the rules are followed exactly, and a diagnostic (1+1) with default settings
+   reproduces the official runs bit for bit. The collapse is how the 1/5 rule behaves when *no* step
+   size reaches 20 % success. That is what we measured at the stagnated points: the repair creates
+   kinks (weights cut at 0, return pinned at R_min), where even tiny steps succeed only 10–18 % of the
+   time instead of about 50 %.
 
 ### 8. Common mistakes
 - Accepting equal or worse children.
@@ -805,11 +836,18 @@ E15–E23.
    - Z_i lets individual coordinates differ.
    - A test checked through the real code that Z₀ is shared. The coordinates' log-step changes are
      correlated by τ'²/(τ'² + τ²) ≈ 0.155 for n = 31.
-4. **Which is better, plus or comma?**
-   - On these data, no clear difference: (μ,λ) had the lower mean in 8 of 15 cases and (μ+λ) in 7.
-   - (μ,λ) was lower in 84 of 150 seed pairs, a sign test p = 0.165, so not significant.
-   - Per case, the differences are at most 5 %.
+4. **Which is better, plus or comma?** (Answer updated: case-level analysis.)
+   - **Statistical unit = case.** The 150 seed pairs come from 15 cases, so they are not independent.
+     Each case contributes one mean difference.
+   - **Overall:** mean relative difference +0.005 %, 95 % bootstrap interval −1.3 % to +1.4 %,
+     exact sign-flip test p = 0.99 → **no evidence of an overall difference**.
+   - **Not equivalence:** no equivalence margin was defined, and within individual cases the intervals
+     reach about ±10 %, so we cannot claim they are equally good.
+   - **Dataset pattern:** (μ+λ) lower on all three port4 cases, (μ,λ) on port5 at α = 0.25/0.50.
+     After correcting for 15 tests, only port1 at α ≥ 0.50 is significant, and there the difference
+     (0.001 %) is practically meaningless: both reach the optimum.
    - Both clearly beat (1+1), in 150/150 pairs.
+   - *Why the earlier sign test (p = 0.165) was replaced:* it treated the 150 pairs as independent.
 5. **Why are plus and comma comparable seed by seed?**
    With the same seed they start from the same 10 parents, because initialisation draws the same
    random numbers. The audit verifies this.
@@ -856,9 +894,19 @@ On port5_alpha050 the final mean variances are 7.27e−4, 3.96e−4 and 3.77e−
    - A (1+1) trial and a population generation cost very different numbers of evaluations, so
      generations would not be fair.
    - Runtime is reported separately.
-4. **Can you say how good the best portfolios are in absolute terms?**
-   Not from these experiments. The assignment limits conclusions to relative performance, and we did
-   not compute the exact optimum. This is a stated limitation.
+4. **Can you say how good the best portfolios are in absolute terms?** (Answer updated.)
+   As supplementary context, yes.
+   - We computed the minimum-variance portfolio for every case. The candidate comes from a solver
+     (SLSQP); then the optimality (KKT) equations are solved exactly on its support, every KKT
+     condition is checked, and a weak-duality lower bound is computed. Residuals are ≤ 2.2·10⁻¹⁶ and
+     the duality gaps are at rounding level. Neither the 450 ES runs nor 20,000 random portfolios beat
+     it.
+   - **This is a numerical verification, not a formal proof,** because floating-point rounding is not
+     bounded rigorously.
+   - **Results:** population ES 0–18 % above the optimum on average (exactly optimal on port1);
+     (1+1) 15–137 %.
+   - The assignment's conclusions stay relative; the gaps only help explain stagnation and the effect
+     of problem size.
 5. **Why was BLAS set to single-threaded?**
    Multi-threading made the runtimes about twice as slow and erratic, with identical results.
    Runtime is a compared metric, so stable timing was needed.

@@ -22,7 +22,9 @@
 
 Cases where each variant has the lowest mean variance: (1+1)-ES: 0, (μ+λ)-ES: 7, (μ,λ)-ES: 8
 
-## Paired per-seed comparisons (150 pairs = 15 cases x 10 seeds)
+## Paired per-seed counts (150 pairs = 15 cases x 10 seeds; descriptive only)
+
+These counts describe the data; they are not a significance test, because pairs from the same case are not independent. See es_plus_vs_comma.md for the case-level test.
 
 | Comparison | First lower | Second lower | Equal |
 |---|---|---|---|

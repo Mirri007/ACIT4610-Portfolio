@@ -14,8 +14,9 @@ Outputs
   standard deviation, feasible-run rate and mean runtime.
 * ``results/tables/es_comparison.md``: mean variance of the three variants side by side per case,
   plus paired per-seed comparisons (used in the analysis).
-* ``results/tables/es_analysis.md``: stagnation, sparsity, constraint activity, (1+1) step-size
-  behaviour and a sign test for (μ+λ) vs (μ,λ).
+* ``results/tables/es_analysis.md``: stagnation, sparsity, constraint activity and (1+1) step-size behaviour.
+* ``results/tables/es_plus_vs_comma.md``: case-level statistical comparison of (μ+λ) and (μ,λ)
+  (statistical unit = case; exact sign-flip tests, bootstrap intervals, Holm correction).
 
 Statistics follow the assignment: variance statistics use only VALID (feasible) runs; the number
 of valid runs out of 10 is reported; mean runtime is averaged over ALL 10 runs.
@@ -28,7 +29,6 @@ assignment tolerances, re-evaluate to exactly the saved variance and return, and
 """
 
 import csv
-import math
 
 import numpy as np
 
@@ -37,6 +37,7 @@ from experiments.run_es_experiments import PROBLEM_FOLDER
 from src.portfolio_data import load_all_cases
 from src.portfolio_model import expected_return, feasibility_violations, portfolio_variance
 from src.run_es import BUDGET, FINAL_SEEDS, VARIANTS
+from src.statistics_tools import bootstrap_mean_interval, exact_sign_flip_p_value, holm_adjusted
 
 TABLES_FOLDER = PROBLEM_FOLDER / "results" / "tables"
 ALL_RUNS_CSV = PROBLEM_FOLDER / "results" / "raw" / "es_all_runs.csv"
@@ -150,7 +151,9 @@ def write_comparison(results, cases):
     # Paired comparisons. For the same seed, (μ+λ) and (μ,λ) start from IDENTICAL initial
     # parents (the random generator is used identically during initialisation), so comparing
     # them seed by seed removes the luck of the starting population.
-    lines += ["## Paired per-seed comparisons (150 pairs = 15 cases x 10 seeds)", "",
+    lines += ["## Paired per-seed counts (150 pairs = 15 cases x 10 seeds; descriptive only)", "",
+              "These counts describe the data; they are not a significance test, because pairs from the same "
+              "case are not independent. See es_plus_vs_comma.md for the case-level test.", "",
               "| Comparison | First lower | Second lower | Equal |", "|---|---|---|---|"]
     pairs = [("mu_plus_lambda", "mu_comma_lambda"), ("mu_plus_lambda", "one_plus_one"), ("mu_comma_lambda", "one_plus_one")]
     for first, second in pairs:
@@ -169,21 +172,103 @@ def write_comparison(results, cases):
     (TABLES_FOLDER / "es_comparison.md").write_text("\n".join(lines) + "\n")
 
 
-def sign_test_p_value(wins, losses):
+def plus_vs_comma_analysis(results, cases):
     """
-    Exact two-sided sign test: if two variants were equally good, each paired comparison would be
-    a fair coin flip. The p-value is the probability of a split at least this uneven by chance.
-    p = 2 * P(X <= min(wins, losses)) with X ~ Binomial(wins + losses, 1/2), capped at 1.
+    Compare (μ+λ)-ES and (μ,λ)-ES with the CASE as the statistical unit.
+
+    For each case: the 10 paired relative differences
+        d_seed = (V_plus,seed - V_comma,seed) / mean(V_comma over the 10 seeds)
+    (negative = plus found lower variance). Pairs are formed by seed because, for the same seed,
+    both variants start from the same 10 initial parents.
+
+    Returns
+    -------
+    dict with
+      "cases": per case: mean relative difference, bootstrap 95 % interval over the 10 seeds,
+               exact sign-flip p-value over the 10 seeds, Holm-adjusted p-value, seeds where plus is lower;
+      "overall": mean of the 15 case means, bootstrap 95 % interval over the 15 cases, exact sign-flip
+                 p-value over the 15 cases, number of cases where plus is lower on average.
     """
-    n = wins + losses
-    k = min(wins, losses)
-    return min(1.0, 2 * sum(math.comb(n, i) for i in range(k + 1)) / 2 ** n)
+    case_rows = []
+    for case in cases:
+        plus = {r["seed"]: r["final_variance"] for r in select_runs(results, case.name, "mu_plus_lambda")}
+        comma = {r["seed"]: r["final_variance"] for r in select_runs(results, case.name, "mu_comma_lambda")}
+        scale = np.mean(list(comma.values()))
+        differences = [(plus[seed] - comma[seed]) / scale for seed in FINAL_SEEDS]
+        case_rows.append({
+            "case": case.name,
+            "mean_relative_difference": float(np.mean(differences)),
+            "interval": bootstrap_mean_interval(differences),
+            "p_value": exact_sign_flip_p_value(differences),
+            "plus_lower_in": int(sum(d < 0 for d in differences)),
+        })
+    for row, adjusted in zip(case_rows, holm_adjusted([row["p_value"] for row in case_rows])):
+        row["holm_p_value"] = adjusted
+    case_means = [row["mean_relative_difference"] for row in case_rows]
+    overall = {
+        "mean_relative_difference": float(np.mean(case_means)),
+        "interval": bootstrap_mean_interval(case_means),
+        "p_value": exact_sign_flip_p_value(case_means),
+        "cases_plus_lower": int(sum(m < 0 for m in case_means)),
+        "n_cases": len(case_means),
+    }
+    return {"cases": case_rows, "overall": overall}
+
+
+def write_plus_vs_comma(results, cases):
+    """Write the case-level comparison of (μ+λ) and (μ,λ) with its explanation and limitations."""
+    analysis = plus_vs_comma_analysis(results, cases)
+    overall = analysis["overall"]
+    lines = [
+        "# Problem 2: (μ+λ)-ES vs (μ,λ)-ES, case-level comparison",
+        "",
+        "**Statistical unit.** The 150 seed pairs come from 15 cases that differ systematically (data, size, "
+        "target), so they are not 150 independent observations. The main test therefore uses the **case** as "
+        "the unit: each case contributes the mean of its 10 paired relative differences "
+        "d = (V_plus - V_comma) / mean(V_comma); negative = (μ+λ) lower. Pairs share the seed, and with the "
+        "same seed both variants start from the same 10 parents.",
+        "",
+        "## Overall (15 cases)",
+        "",
+        f"- Mean of the case means: {100 * overall['mean_relative_difference']:+.3f} %",
+        f"- 95 % percentile-bootstrap interval over cases: [{100 * overall['interval'][0]:+.3f} %, "
+        f"{100 * overall['interval'][1]:+.3f} %]",
+        f"- Exact two-sided sign-flip test over the 15 case means (all 32,768 sign patterns): p = {overall['p_value']:.3f}",
+        f"- (μ+λ) lower on average in {overall['cases_plus_lower']} of {overall['n_cases']} cases",
+        "",
+        "## Within each case (10 paired seeds)",
+        "",
+        "| Case | Mean relative difference | 95 % bootstrap interval | Exact sign-flip p | Holm-adjusted p | Seeds with (μ+λ) lower |",
+        "|---|---|---|---|---|---|",
+    ]
+    for row in analysis["cases"]:
+        low, high = row["interval"]
+        lines.append(f"| {row['case']} | {100 * row['mean_relative_difference']:+.3f} % | "
+                     f"[{100 * low:+.3f} %, {100 * high:+.3f} %] | {row['p_value']:.4f} | {row['holm_p_value']:.4f} | "
+                     f"{row['plus_lower_in']}/10 |")
+    lines += [
+        "",
+        "## How to read this, and limitations",
+        "",
+        "- An overall p-value far above 0.05 means **no evidence of an overall difference**; it does NOT show the "
+        "variants are equivalent. Equivalence would need a margin fixed in advance and an interval inside it, "
+        "which this study did not define.",
+        "- The 15 cases are the assignment's fixed benchmark, not a random sample of all portfolio problems; "
+        "conclusions apply to these cases.",
+        "- With only 15 cases (overall) or 10 seeds (within a case), percentile-bootstrap intervals are approximate "
+        "and tend to be slightly too narrow.",
+        "- The sign-flip test assumes that, without a real difference, each difference is symmetric around 0.",
+        "- Within-case p-values are adjusted with Holm's method for 15 tests. A significant within-case result "
+        "can still be practically negligible (check the size of the mean difference).",
+    ]
+    (TABLES_FOLDER / "es_plus_vs_comma.md").write_text("\n".join(lines) + "\n")
+    return analysis
 
 
 def write_analysis(results):
     """
-    Extra statistics used in the discussion (stagnation, sparsity, constraint activity,
-    step-size behaviour and significance), computed per variant over all 150 runs.
+    Extra statistics used in the discussion (stagnation, sparsity, constraint activity and
+    step-size behaviour), computed per variant over all 150 runs.
     """
     lines = [
         "# Problem 2: analysis statistics (all 15 cases x 10 seeds per variant)",
@@ -206,15 +291,7 @@ def write_analysis(results):
     lines += ["", f"(1+1)-ES success rate: mean {np.mean(rates):.3f}, min {min(rates):.3f}, max {max(rates):.3f}; "
               f"runs ending with step size below 1e-7: {collapsed}/{len(one_plus_one)}.", ""]
 
-    wins = losses = 0
-    for r in results:
-        if r["variant"] != "mu_plus_lambda":
-            continue
-        partner = next(o for o in results if o["variant"] == "mu_comma_lambda" and o["case"] == r["case"] and o["seed"] == r["seed"])
-        wins += r["final_variance"] < partner["final_variance"]
-        losses += r["final_variance"] > partner["final_variance"]
-    lines.append(f"Sign test (μ+λ)-ES vs (μ,λ)-ES over 150 seed pairs: (μ+λ) lower in {wins}, (μ,λ) lower in {losses}; "
-                 f"two-sided p = {sign_test_p_value(wins, losses):.3f}.")
+    lines.append("The comparison of (μ+λ) and (μ,λ) is in es_plus_vs_comma.md (case-level analysis).")
     (TABLES_FOLDER / "es_analysis.md").write_text("\n".join(lines) + "\n")
     print("\n".join(lines))
 
@@ -228,6 +305,7 @@ def main():
     write_summary(summarise(results, cases))
     write_comparison(results, cases)
     write_analysis(results)
+    write_plus_vs_comma(results, cases)
     print((TABLES_FOLDER / "es_summary.md").read_text())
     print((TABLES_FOLDER / "es_comparison.md").read_text())
 

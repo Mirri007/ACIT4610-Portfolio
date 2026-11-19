@@ -1,0 +1,4 @@
+# Extra dependency for the SUPPLEMENTARY analyses only (problem_2/supplementary/reference_optima.py).
+# The required experiments, tables and figures need only requirements.txt.
+-r requirements.txt
+scipy==1.17.1

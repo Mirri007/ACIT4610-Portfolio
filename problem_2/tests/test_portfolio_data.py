@@ -25,7 +25,8 @@ from src.portfolio_data import (
 
 def independent_parse(path):
     """Second, deliberately different parser: reads line by line, fills a dict of pairs."""
-    lines = [line.split() for line in open(path) if line.strip()]
+    with open(path) as handle:   # "with" closes the file again (avoids a ResourceWarning)
+        lines = [line.split() for line in handle if line.strip()]
     n = int(lines[0][0])
     returns = [float(line[0]) for line in lines[1:n + 1]]
     stds = [float(line[1]) for line in lines[1:n + 1]]

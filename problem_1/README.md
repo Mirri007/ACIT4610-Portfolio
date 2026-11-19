@@ -69,7 +69,7 @@ are in [docs/implementation_notes.md](../docs/implementation_notes.md), section 
 ## Part A: commands
 
 ```bash
-# Run the automated tests (about 6 seconds)
+# Run the automated tests (about 10 seconds)
 python -m pytest
 
 # One single run (berlin52, segment reversal, seed 0), about 0.6 seconds
@@ -112,6 +112,7 @@ Finished runs are skipped when the experiment is restarted; add `--overwrite` to
 | `results/tables/tsp_summary.csv` / `.md` | Required summary table (instance, cities, optimum, best, mean, std, mean gap, mean runtime) |
 | `results/tables/tsp_pilot_settings.csv` | Pilot study used to choose the settings |
 | `results/tables/tsp_robustness_pilot.csv` / `.md` | Later robustness check on pr76, rat99, ch130 (not used for selection) |
+| `results/tables/tsp_paired_comparison.md` | Seed-by-seed swap vs reversal (same seed = same initial population) |
 | `results/figures/tsp_convergence_berlin52.png`, `tsp_convergence_ch150.png` | Mean best-so-far vs evaluations, both neighbourhoods, optimum marked |
 | `results/figures/tsp_route_berlin52.png` | Shortest berlin52 tour over all 20 runs, with return leg and labels |
 | `results/tsp_experiment_log.txt` | Console log of the full experiment run |
@@ -189,3 +190,32 @@ python -m experiments.audit_continuous_trace     # logs every evaluation of 3 re
 | `results/continuous_experiment_log.txt` | Console log of the full experiment run |
 
 Since every global minimum is 0, each final objective value is the run's objective error.
+
+## Kinds of runs and their seeds
+
+| Kind | Purpose | Seeds |
+|---|---|---|
+| Required experiments | The 120 TSP runs and 80 continuous runs reported as results | 0–9 |
+| Parameter pilots | Choosing the BA settings (Part A: eil51/kroA100/ch150; Part B: D = 20) | 100–104 |
+| Post-hoc robustness check (Part A) | Checking the chosen setting on pr76/rat99/ch130; did not change anything | 200–204 |
+| Post-hoc diagnostics (Part B) | Explaining the Part B results (below) | 300–309 (probe 306) |
+| Automated tests | | various, not 0–9 for algorithm runs |
+
+## Supplementary diagnostics for Part B (post hoc; not part of the required experiments)
+
+Script `supplementary/continuous_diagnostics.py` (added after the critical review, `docs/critical_review.md`):
+
+- **Part A of the script (compliant):** at the saved final solutions, the probability that one
+  assignment neighbour improves, the distance to the optimum compared with the neighbourhood size,
+  and the share of improvement made in the second half of the budget.
+- **Part B of the script (compliant):** sensitivity to five BA settings, all with the assignment's ±10 %
+  neighbourhood, at D = 10 and 30.
+- **Part C of the script (NOT assignment-compliant, explanatory only):** the same BA with ±3 % and ±1 %
+  neighbourhoods. Written to a separate file, `NONCOMPLIANT_neighbourhood_size_sweep.md`; never a result.
+
+```bash
+python -m supplementary.continuous_diagnostics   # about 8 minutes
+```
+
+Outputs: `results/supplementary/continuous_diagnostics.md/.json` and
+`results/supplementary/NONCOMPLIANT_neighbourhood_size_sweep.md/.json`.

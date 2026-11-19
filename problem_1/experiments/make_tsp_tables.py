@@ -14,6 +14,8 @@ Outputs
   standard deviation of the final tour length, mean percentage gap and mean runtime.
   Two extra columns help the discussion: the mean initial best length (to show improvement
   from the initial population) and the best gap.
+* ``results/tables/tsp_paired_comparison.md``: seed-by-seed comparison of swap and reversal
+  (same seed = same initial population).
 
 Before summarising, every saved tour is checked again from scratch: it must be a valid
 permutation starting at city 1, its length must be recomputed to the saved value, and the
@@ -117,12 +119,56 @@ def write_summary(rows):
     (TABLES_FOLDER / "tsp_summary.md").write_text("\n".join(lines) + "\n")
 
 
+def paired_neighbourhood_comparison(results):
+    """
+    Seed-by-seed comparison of the two neighbourhoods.
+
+    For the same seed, swap and reversal start from the IDENTICAL initial population (the random
+    generator creates the initial tours before any neighbourhood move is used), so each seed gives a
+    fair head-to-head pair. Returns one row per instance: number of seeds where reversal ended
+    shorter, swap ended shorter, or both were equal, plus the mean paired difference in tour length
+    (swap - reversal).
+    """
+    rows = []
+    present = {run["instance"] for run in results}
+    for instance_name in [name for name in TSP_INSTANCES if name in present]:   # assignment order
+        swap = {run["seed"]: run["final_best_length"] for run in select_runs(results, instance_name, "swap")}
+        reversal = {run["seed"]: run["final_best_length"] for run in select_runs(results, instance_name, "reversal")}
+        seeds = sorted(swap)
+        rows.append({
+            "instance": instance_name,
+            "pairs": len(seeds),
+            "reversal_shorter": sum(reversal[s] < swap[s] for s in seeds),
+            "swap_shorter": sum(swap[s] < reversal[s] for s in seeds),
+            "equal": sum(swap[s] == reversal[s] for s in seeds),
+            "mean_difference_swap_minus_reversal": float(np.mean([swap[s] - reversal[s] for s in seeds])),
+        })
+    return rows
+
+
+def write_paired_comparison(rows):
+    lines = [
+        "# Part A: paired comparison of the neighbourhoods (same seed = same initial population)",
+        "",
+        "| Instance | Pairs | Reversal shorter | Swap shorter | Equal | Mean difference (swap − reversal) |",
+        "|---|---|---|---|---|---|",
+    ]
+    for row in rows:
+        lines.append(f"| {row['instance']} | {row['pairs']} | {row['reversal_shorter']} | {row['swap_shorter']} | "
+                     f"{row['equal']} | {row['mean_difference_swap_minus_reversal']:.1f} |")
+    total = {key: sum(row[key] for row in rows) for key in ("pairs", "reversal_shorter", "swap_shorter", "equal")}
+    lines += ["", f"Total: reversal shorter in {total['reversal_shorter']} of {total['pairs']} pairs, swap shorter in "
+              f"{total['swap_shorter']}, equal in {total['equal']}."]
+    (TABLES_FOLDER / "tsp_paired_comparison.md").write_text("\n".join(lines) + "\n")
+
+
 def main():
     results = load_all_tsp_results()
     verify_all_runs(results)
     write_all_runs_csv(results)
     rows = summarise(results)
     write_summary(rows)
+    write_paired_comparison(paired_neighbourhood_comparison(results))
     print((TABLES_FOLDER / "tsp_summary.md").read_text())
     print(f"Saved {ALL_RUNS_CSV}\nSaved {TABLES_FOLDER / 'tsp_summary.csv'} and tsp_summary.md")
 
