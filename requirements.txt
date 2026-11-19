@@ -1,0 +1,4 @@
+# Exact versions used during development (Python 3.11.1).
+numpy==1.26.4
+matplotlib==3.9.2
+pytest==8.3.3
