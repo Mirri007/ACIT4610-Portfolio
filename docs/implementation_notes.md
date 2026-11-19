@@ -412,3 +412,13 @@ No parameter was tuned: μ, λ, the initial step sizes, the step-size bounds, th
 6. **Feasible-run rate is 10/10 everywhere.** The repair guarantees feasibility by construction, so
    this column cannot discriminate between the variants.
 7. **Historical data.** Results say nothing about future investment performance.
+
+### 9. Reproducibility check (performed 2026-11-19)
+
+1. Cloned the repository at commit `154bfe2` into an empty folder, created a fresh virtual
+   environment and installed `requirements.txt`. All 119 Problem 2 tests passed, and the
+   single-case command from the README worked.
+2. Re-ran all 450 runs with `--overwrite`. All 450 results were identical to the committed ones in
+   every field except `runtime_seconds`.
+3. The regenerated comparison and analysis tables were identical.
+4. `audit_es_results` and `audit_es_trace` both passed.
