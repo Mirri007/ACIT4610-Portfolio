@@ -1,6 +1,6 @@
 # Problem 1: Bees Algorithm
 
-Part A (TSP) is implemented, tested and run. Part B (continuous functions) is not started yet.
+Part A (TSP) and Part B (continuous functions) are implemented, tested, run and audited.
 
 All commands below are run from **this folder** (`problem_1/`) after installing the
 dependencies (see the main [README](../README.md)).
@@ -16,6 +16,8 @@ dependencies (see the main [README](../README.md)).
 | `src/tsp_neighbourhoods.py` | Swap move and segment-reversal move |
 | `src/evaluation_tracker.py` | Counts every objective evaluation, enforces the budget, records the best-so-far history |
 | `src/bees_algorithm.py` | The Bees Algorithm (shared by Part A and Part B) |
+| `src/benchmark_functions.py` | Sphere, Rosenbrock, Rastrigin, Ackley and their bounds |
+| `src/bees_continuous.py` | Runs the BA on one function: random vectors, ±10 % neighbourhood with clipping; **Part B settings and seeds** |
 | `src/bees_tsp.py` | Runs the BA on one TSP instance; **Part A settings and seeds** |
 | `src/tsp_instances.py` | Instance names, city counts, optimal lengths, file paths, source URLs |
 | `experiments/` | Scripts that run experiments and build tables/figures |
@@ -115,3 +117,75 @@ Finished runs are skipped when the experiment is restarted; add `--overwrite` to
 | `results/tsp_experiment_log.txt` | Console log of the full experiment run |
 
 Gap(%) = 100 · (L_BA − L*) / L*, where L_BA is the final best valid tour length of the run.
+
+## Part B: functions
+
+| Function | Bounds (every coordinate) | Global minimum |
+|----------|---------------------------|----------------|
+| Sphere | [−5.12, 5.12] | f(0, …, 0) = 0 |
+| Rosenbrock | [−5, 10] | f(1, …, 1) = 0 |
+| Rastrigin | [−5.12, 5.12] | f(0, …, 0) = 0 |
+| Ackley (a = 20, b = 0.2, c = 2π) | [−32.768, 32.768] | f(0, …, 0) = 0 |
+
+Formulas follow the assignment and the SFU Virtual Library (Surjanovic & Bingham,
+https://www.sfu.ca/~ssurjano/). No data files are needed. Dimensions D = 10 and D = 30.
+
+## Part B: Bees Algorithm settings
+
+| Setting | Symbol | Value |
+|---------|--------|------:|
+| Scout bees (population size) | n | 10 |
+| Selected sites | m | 3 |
+| Elite sites | e | 1 |
+| Recruited bees per elite site | nep | 100 |
+| Recruited bees per other selected site | nsp | 50 |
+| Fresh random scouts per iteration | n − m | 7 |
+| Evaluations per full iteration | e·nep + (m−e)·nsp + (n−m) | 207 |
+| Evaluation budget per run | | 30,000 |
+| Neighbourhood | | each coordinate + U(−10 %, +10 %) of (upper − lower), then clipped to bounds |
+| Seeds | | 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 |
+
+30,000 evaluations = 10 (initial population) + 144 full iterations × 207 (= 29,808) + 182 in an incomplete
+145th iteration. Scouts are uniform random vectors inside the bounds.
+
+Settings were chosen with a pilot study at D = 20 (not an experiment dimension) and seeds 100–104,
+using a selection rule fixed in advance (lowest average rank over the four functions). The differences
+between candidate settings were within about one standard deviation, so the settings matter little
+here; see [docs/implementation_notes.md](../docs/implementation_notes.md), Problem 1B section 3.
+
+## Part B: commands
+
+```bash
+# One single run (Rastrigin, D = 10, seed 0), about 0.3 seconds
+python -m experiments.run_continuous_experiments --functions rastrigin --dimensions 10 --seeds 0
+
+# The full Part B experiment: 4 functions x 2 dimensions x 10 seeds = 80 runs
+# (total search time was 28 s on an Apple M2)
+python -m experiments.run_continuous_experiments
+
+# Tables and figures from the saved results
+python -m experiments.make_continuous_tables
+python -m experiments.make_continuous_plots
+
+# Settings pilot (80 runs, under a minute)
+python -m experiments.continuous_pilot_settings
+
+# Audits (exit code 0 = passed)
+python -m experiments.audit_continuous_results   # independent re-check of all 80 runs + summary (no project imports)
+python -m experiments.audit_continuous_trace     # logs every evaluation of 3 real runs and rebuilds the BA logic
+```
+
+## Part B: outputs
+
+| File | Contents |
+|------|----------|
+| `results/raw/continuous/<function>_D<D>_seed<seed>.json` | One file per run: settings, seed, bounds, initial best, final best value, final best vector, runtime, evaluations, iterations, best-so-far history |
+| `results/convergence/continuous/<function>_D<D>_seed<seed>.csv` | Best-so-far log: `evaluation, best_so_far_value`, one row per improvement |
+| `results/raw/continuous_all_runs.csv` | All 80 runs in one table, including final vectors |
+| `results/tables/continuous_summary.csv` / `.md` | Required summary table (function, D, best, mean, std, mean runtime; plus mean initial best and median) |
+| `results/tables/continuous_pilot_settings.csv` / `.md` | Pilot study used to choose the settings |
+| `results/figures/continuous_convergence_rastrigin_D10.png` | Mean best-so-far vs evaluations, Rastrigin D = 10, log-scale y-axis (labelled) |
+| `results/figures/continuous_boxplots_D30.png` | Boxplots of final values, four functions at D = 30, four panels |
+| `results/continuous_experiment_log.txt` | Console log of the full experiment run |
+
+Since every global minimum is 0, each final objective value is the run's objective error.

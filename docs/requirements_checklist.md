@@ -33,13 +33,13 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done **and verified**
 
 | ID | Requirement | Status | Evidence / note |
 |----|-------------|--------|-----------------|
-| BA1 | Implement BA of Pham et al. (2006) as discussed in lectures | [~] | Basic Pham 2006 BA in `src/bees_algorithm.py` (Part A verified; Part B pending) |
-| BA2 | Part A representation = permutation of cities; Part B = real vector | [~] | Part A permutation done; Part B pending (Part A verified; Part B pending) |
-| BA3 | Choose and **record** BA settings for each part | [~] | Part A settings in `src/bees_tsp.py`, README, implementation_notes §6 (Part A verified; Part B pending) |
-| BA4 | Exactly **30,000 objective evaluations per run** | [~] | Tests + all 120 saved runs re-verified (Part A verified; Part B pending) |
-| BA5 | Count initial population, recruited neighbours, fresh scouts, **including rejected candidates** | [~] | Single counting point `EvaluationTracker.evaluate`; independent call counter in tests (Part A verified; Part B pending) |
-| BA6 | Stop exactly at budget; allow incomplete final iteration | [~] | Tests: budget ends mid-recruitment, mid-scouting, after initial population (Part A verified; Part B pending) |
-| BA7 | Record initial best value, best-so-far history, final best solution | [~] | Saved per run: initial_best_length, best_so_far_history, best_tour_city_ids (Part A verified; Part B pending) |
+| BA1 | Implement BA of Pham et al. (2006) as discussed in lectures | [x] | Basic Pham 2006 BA, shared by Parts A and B |
+| BA2 | Part A representation = permutation of cities; Part B = real vector | [x] | Permutation (A) and real vector (B) |
+| BA3 | Choose and **record** BA settings for each part | [x] | Recorded in README and implementation_notes (A §6, B §3) |
+| BA4 | Exactly **30,000 objective evaluations per run** | [x] | Tests, saved runs and both audit scripts for A and B |
+| BA5 | Count initial population, recruited neighbours, fresh scouts, **including rejected candidates** | [x] | Single counting point `EvaluationTracker.evaluate`; trace audits |
+| BA6 | Stop exactly at budget; allow incomplete final iteration | [x] | Tests (mid-recruitment, mid-scouting); trace audits show last iteration |
+| BA7 | Record initial best value, best-so-far history, final best solution | [x] | Saved per run in A and B |
 
 ### P1-A: TSP
 
@@ -71,31 +71,31 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done **and verified**
 
 | ID | Requirement | Status | Evidence / note |
 |----|-------------|--------|-----------------|
-| B1 | Sphere, bounds [−5.12, 5.12], f(0)=0 | [ ] | |
-| B2 | Rosenbrock, bounds [−5, 10], f(1)=0 | [ ] | |
-| B3 | Rastrigin, bounds [−5.12, 5.12], f(0)=0 | [ ] | |
-| B4 | Ackley, bounds [−32.768, 32.768], f(0)=0 (a=20, b=0.2, c=2π) | [ ] | |
-| B5 | Dimensions D = 10 and D = 30 | [ ] | |
-| B6 | Check each function at known minimiser **and one other point** vs SFU definitions/reference code, with float tolerance | [ ] | |
-| B7 | Never insert known minimising vectors into the search | [ ] | |
-| B8 | Scouts initialised uniformly within bounds | [ ] | |
-| B9 | Neighbour: per coordinate, independent uniform change in [−10%, +10%] of (upper − lower), add, clip to bounds | [ ] | |
-| B10 | Record settings for site selection, recruitment, scouting | [ ] | |
-| B11 | 10 seeds × 4 functions × 2 dims = **80 runs**, full budget each | [ ] | |
-| B12 | Per run: final best value, best vector, runtime, evaluations used | [ ] | |
-| B13 | Summary table for 8 cases: function, D, best, mean, std, mean runtime | [ ] | |
-| B14 | Convergence plot: **Rastrigin D=10 only**, evaluations vs mean best-so-far, label any axis transform (e.g. log scale) | [ ] | |
-| B15 | Boxplots of final objectives, 4 functions at D=30, **four panels in one figure**, labelled axes + captions | [ ] | |
+| B1 | Sphere, bounds [−5.12, 5.12], f(0)=0 | [x] | `sphere`; minimiser + hand value + SFU transcription tests |
+| B2 | Rosenbrock, bounds [−5, 10], f(1)=0 | [x] | `rosenbrock`; tests |
+| B3 | Rastrigin, bounds [−5.12, 5.12], f(0)=0 | [x] | `rastrigin`; tests |
+| B4 | Ackley, bounds [−32.768, 32.768], f(0)=0 (a=20, b=0.2, c=2π) | [x] | `ackley` a=20, b=0.2, c=2π; tests |
+| B5 | Dimensions D = 10 and D = 30 | [x] | D = 10 and 30 in all runs |
+| B6 | Check each function at known minimiser **and one other point** vs SFU definitions/reference code, with float tolerance | [x] | `tests/test_benchmark_functions.py`: minimiser, hand values, SFU R code transcription at 200 random points |
+| B7 | Never insert known minimising vectors into the search | [x] | Minimisers only in tests; scouts are uniform random vectors |
+| B8 | Scouts initialised uniformly within bounds | [x] | `create_random_vector`; uniformity test |
+| B9 | Neighbour: per coordinate, independent uniform change in [−10%, +10%] of (upper − lower), add, clip to bounds | [x] | `create_neighbour_vector`; tests + trace audit of 28,982 recruits/run |
+| B10 | Record settings for site selection, recruitment, scouting | [x] | `CONTINUOUS_BEES_SETTINGS`, README, implementation_notes 1B §3 |
+| B11 | 10 seeds × 4 functions × 2 dims = **80 runs**, full budget each | [x] | 80 JSON files in `results/raw/continuous/`; all 30,000 evaluations |
+| B12 | Per run: final best value, best vector, runtime, evaluations used | [x] | Each JSON + `results/raw/continuous_all_runs.csv` |
+| B13 | Summary table for 8 cases: function, D, best, mean, std, mean runtime | [x] | `results/tables/continuous_summary.md/.csv` |
+| B14 | Convergence plot: **Rastrigin D=10 only**, evaluations vs mean best-so-far, label any axis transform (e.g. log scale) | [x] | `results/figures/continuous_convergence_rastrigin_D10.png`, log y-axis labelled |
+| B15 | Boxplots of final objectives, 4 functions at D=30, **four panels in one figure**, labelled axes + captions | [x] | `results/figures/continuous_boxplots_D30.png` (captions to be written in the report) |
 
 ### P1 deliverables (code)
 
 | ID | Requirement | Status |
 |----|-------------|--------|
-| P1D1 | BA for TSP (swap + reversal), BA continuous, TSPLIB loading + tour validation, distance + function calcs, bounds handling | [~] TSP parts done |
-| P1D2 | Commands/scripts for all runs, summary tables, convergence plots, route plots, boxplots | [~] Part A done |
-| P1D3 | Raw per-run results + best-so-far logs (seeds, objective values, eval counts, runtime, final tours/vectors) | [~] Part A done |
+| P1D1 | BA for TSP (swap + reversal), BA continuous, TSPLIB loading + tour validation, distance + function calcs, bounds handling | [x] Parts A and B |
+| P1D2 | Commands/scripts for all runs, summary tables, convergence plots, route plots, boxplots | [x] Parts A and B |
+| P1D3 | Raw per-run results + best-so-far logs (seeds, objective values, eval counts, runtime, final tours/vectors) | [x] Parts A and B |
 | P1D4 | Six original TSPLIB instances + source URLs in repo | [x] |
-| P1D5 | README: dependency versions, all BA settings, seed lists, data locations, exact commands for one run and full set | [~] Part A done |
+| P1D5 | README: dependency versions, all BA settings, seed lists, data locations, exact commands for one run and full set | [x] Parts A and B |
 
 ### P1 report content (student writes; code must supply the material)
 

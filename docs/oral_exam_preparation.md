@@ -381,3 +381,172 @@ Every saved tour was re-verified: valid permutation, recomputed length matches, 
 5. **Are these results reproducible?**
    Yes. Each run is fully determined by its seed. Running the same command gives the same tours and
    lengths; only the measured runtime differs slightly.
+
+---
+
+# Problem 1B: Bees Algorithm for continuous functions
+
+## Words you need first
+
+| Term | Meaning |
+|------|---------|
+| **Continuous optimisation** | The solution is a list of real numbers that can take any value in a range (not an ordering of cities). |
+| **Decision variable / coordinate** | One number in the solution vector x = (x₁, …, x_D). |
+| **Dimension D** | How many numbers the vector has (10 or 30 here). |
+| **Bounds** | The allowed interval for each coordinate, e.g. [−5.12, 5.12]. |
+| **Global minimum** | The lowest value the function can take anywhere (0 for all four functions). |
+| **Local minimum** | A point lower than everything *near* it, but not the lowest overall. A search can get stuck there. |
+| **Unimodal / multimodal** | One minimum (Sphere) vs. many local minima (Rastrigin, Ackley). |
+| **Clipping** | If a coordinate goes outside its bounds, set it to the nearest bound. |
+| **Objective error** | Distance from the best possible value. Since the minimum is 0, the error is simply f(x). |
+
+---
+
+## Component 6: The four benchmark functions
+
+File: `src/benchmark_functions.py`
+
+### 1. What it does
+It computes the four test functions exactly as defined in the assignment and the SFU library.
+
+### 2. How each works
+- **Sphere:** add up the squares of all coordinates. It is a smooth bowl with one bottom at 0.
+- **Rosenbrock:** each pair of neighbouring coordinates contributes 100·(x_{i+1} − x_i²)² + (1 − x_i)².
+  The bottom is a long, narrow, curved valley; the minimum is at all ones.
+- **Rastrigin:** 10·D + Σ(x_i² − 10·cos(2πx_i)). A bowl with regular bumps, so there is a local
+  minimum near every point with whole-number coordinates.
+- **Ackley:** −20·exp(−0.2·√(mean x²)) − exp(mean cos(2πx)) + 20 + e. It is almost flat far from
+  the centre, has many small bumps, and a deep narrow hole at 0.
+
+### 3. Why it was done this way
+- Each function is a short formula in NumPy, so it can be compared line by line with the assignment.
+- The known minimisers are kept only in the tests, so the search code can never "cheat".
+
+### 4. Requirements satisfied
+B1–B7 (functions, bounds, both dimensions, checks at the minimiser and another point, no minimiser
+inserted into the search).
+
+### 5. Examples (from the tests)
+- Sphere(1, 2, −3) = 1 + 4 + 9 = 14.
+- Rosenbrock(1, 2) = 100·(2 − 1)² + 0 = 100.
+- Rastrigin(1, 2) = 20 + (1 − 10) + (4 − 10) = 5, because cos(2π·k) = 1 for whole numbers k.
+- Ackley(1, …, 1) = 20 − 20·e^−0.2 ≈ 3.6254.
+
+### 6. Parameters
+Ackley's constants a = 20, b = 0.2, c = 2π; the bounds; D.
+
+### 7. Likely questions
+1. **How did you check the functions are correct?**
+   In three ways:
+   - the value at the known minimiser is 0;
+   - values at points worked out by hand are correct;
+   - the results agree with a line-by-line copy of SFU's own R code at 200 random points per
+     function and dimension.
+
+   Planted bugs (e.g. Ackley with b = 0.25, Rastrigin without the 10·D term) were all caught by
+   the tests.
+2. **Why is Ackley at 0 not exactly 0 in Python?**
+   −20·e⁰ − e¹ + 20 + e should cancel, but floating-point numbers cannot store e exactly, so about
+   4·10⁻¹⁶ remains. The tests use a tolerance of 10⁻¹².
+3. **Why does Rastrigin have the term 10·D?**
+   At x = 0 every cosine is 1, so the sum is −10·D. Adding 10·D makes the minimum exactly 0.
+4. **What makes Rosenbrock hard even though it has one minimum?**
+   The valley is easy to find but narrow and curved. Steps across the valley are punished by the
+   factor 100, so progress along the valley floor is slow.
+5. **Where are the known minimisers used?**
+   Only in the tests. The search starts from uniform random vectors.
+
+### 8. Common mistakes
+- Summing Rosenbrock over all D coordinates instead of D − 1 pairs.
+- Forgetting the 10·D term.
+- Using different Ackley constants.
+
+---
+
+## Component 7: Continuous Bees Algorithm (representation, neighbourhood, clipping)
+
+File: `src/bees_continuous.py` (plus the same `bees_algorithm.py` as Part A)
+
+### 1. What it does
+It runs the **same** Bees Algorithm as Part A, with real-valued vectors instead of tours.
+
+### 2. How it works
+1. **Scout:** each coordinate is drawn uniformly at random between its lower and upper bound.
+2. **Recruit (neighbour):** for **every** coordinate, draw a change uniformly in
+   [−10 %, +10 %] of (upper − lower), add it, then **clip** to the bounds.
+3. Selection, recruitment, retention, scouting and stopping are identical to Part A.
+4. Settings: n = 10, m = 3, e = 1, nep = 100, nsp = 50, so 207 evaluations per iteration.
+   30,000 = 10 + 144 × 207 + 182, so iteration 145 is incomplete.
+
+### 3. Why
+- The neighbourhood and the clipping are exactly what the assignment specifies.
+- Reusing the BA core makes the discrete/continuous comparison clear: only the representation and
+  the move differ.
+
+### 4. Requirements satisfied
+B8–B12, BA1–BA7 for Part B.
+
+### 5. Example (Sphere, range 10.24, maximum change 1.024)
+Site (5.0, −2.0), random changes (+0.5, −0.3) → (5.5, −2.3). Then 5.5 is above the bound 5.12,
+so the neighbour becomes (5.12, −2.3).
+
+### 6. Parameters
+n, m, e, nep, nsp as in Part A; the neighbourhood size is fixed at 10 % by the assignment.
+
+### 7. Likely questions
+1. **Why do the results not reach 0? Is that a bug?**
+   No. The neighbourhood is fixed: every coordinate moves by up to ±10 % of its range in every
+   recruit, and the patch never shrinks. For Sphere the expected squared step size is
+   D·a²/3 ≈ 0.35·D, about 3.5 for D = 10. Once the site is closer to 0 than a typical step is
+   long, almost every random step lands further away. Sphere's mean final values (0.43 at D = 10,
+   5.5 at D = 30) show this ceiling. Later BA versions shrink the neighbourhood to fix exactly this.
+2. **Why is D = 30 so much harder?**
+   Each recruit changes all 30 coordinates at once. The step is longer and it is much less likely
+   that all coordinates move in a helpful direction. The search space is also vastly larger for the
+   same 30,000 evaluations.
+3. **What does clipping do and why is it needed?**
+   It puts any coordinate that left its interval back onto the nearest bound, so every evaluated
+   vector is inside the allowed region. Tests show clipping happens at both bounds.
+4. **What is the same and what is different compared with Part A?**
+   - Same: the whole BA loop, site selection, elite and non-elite recruitment, keeping only
+     improvements, fresh scouts, evaluation counting, stopping and best-so-far tracking.
+   - Different: the representation (vector vs permutation), the scout (uniform vector vs shuffle),
+     the move (perturb all coordinates vs swap/reversal), and constraint handling (clipping vs none
+     needed).
+5. **How were the Part B settings chosen?**
+   With a pilot at D = 20 and seeds 100–104, using a rule fixed in advance (lowest average rank).
+   C won, but all four settings were within about one standard deviation of each other, so the
+   settings matter little here. Before the pilot, one timing run per case with seed 0 was seen;
+   it was not used for selection.
+
+### 8. Common mistakes
+- Using 10 % of the upper bound instead of the range.
+- Changing only one coordinate.
+- Forgetting clipping, or using the same random change for all coordinates. All of these were
+  planted as bugs and caught by the tests.
+
+---
+
+## Component 8: Part B results (what the numbers say)
+
+From `results/tables/continuous_summary.md` (10 runs each):
+
+| Function | D = 10 mean (best) | D = 30 mean (best) | Mean initial best (D = 10 / 30) |
+|---|---|---|---|
+| Sphere | 0.4293 (0.1843) | 5.499 (4.556) | 53.58 / 204.1 |
+| Rosenbrock | 92.38 (64.31) | 2,472 (1,641) | 368,900 / 2,145,000 |
+| Rastrigin | 33.01 (23.14) | 275.6 (245.1) | 133 / 452.5 |
+| Ackley | 6.233 (5.122) | 10.55 (10.07) | 20.53 / 20.89 |
+
+**Points for the discussion:**
+- **Improvement from the initial population** is large everywhere, e.g. Rosenbrock D = 10 from
+  about 369,000 to 92.
+- **No run gets close to the global minimum.** This is explained by the fixed neighbourhood.
+- **Higher dimension** is clearly harder for every function.
+- **Rastrigin convergence (D = 10)** keeps improving slowly in steps; the min–max band shows large
+  run-to-run differences in when improvements happen.
+- **Ackley at D = 30** ends around 10.5 in every run (small std 0.28): all runs stall at a similar
+  level.
+- **Discrete vs continuous:**
+  - In Part A, one move changes only a few edges, so the search can make small, precise changes.
+  - In Part B, every move changes all coordinates by a fixed amount, which limits precision.

@@ -4,7 +4,7 @@ Code, data and results for the ACIT4610 final portfolio (OsloMet, 2026).
 
 | Folder | Contents | Status |
 |--------|----------|--------|
-| [`problem_1/`](problem_1/README.md) | Bees Algorithm: TSP (Part A) and continuous functions (Part B) | Part A done; Part B not started |
+| [`problem_1/`](problem_1/README.md) | Bees Algorithm: TSP (Part A) and continuous functions (Part B) | Parts A and B done and audited |
 | `problem_2/` | Evolution Strategies for portfolio optimisation | Not started |
 | `docs/` | Requirements checklist, implementation notes, AI development log, exam notes | |
 
@@ -34,6 +34,9 @@ python -m pytest                                   # automated tests
 python -m experiments.run_tsp_experiments          # all 120 TSP runs
 python -m experiments.make_tsp_tables              # summary tables
 python -m experiments.make_tsp_plots               # figures
+python -m experiments.run_continuous_experiments   # all 80 continuous-function runs
+python -m experiments.make_continuous_tables
+python -m experiments.make_continuous_plots
 ```
 
 ## Data sources
