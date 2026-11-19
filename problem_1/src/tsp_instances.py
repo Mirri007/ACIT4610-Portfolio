@@ -28,6 +28,24 @@ TSP_INSTANCES = {
 }
 
 
+# ---------------------------------------------------------------------------------------------
+# Extra instances used ONLY for the parameter robustness pilot (experiments/tsp_robustness_pilot.py).
+# They are NOT part of the assignment's evaluation set and are kept in a separate folder so they
+# can never be mixed into the 120 required runs. Optimal lengths are taken from TSPLIB's list of
+# best known solutions: https://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp/TSP-BEST.html
+ROBUSTNESS_PILOT_DATA_FOLDER = Path(__file__).resolve().parent.parent / "data" / "tsplib_robustness_pilot"
+ROBUSTNESS_PILOT_INSTANCES = {
+    "pr76": (76, 108159),
+    "rat99": (99, 1211),
+    "ch130": (130, 6110),
+}
+
+
+def robustness_instance_file_path(instance_name):
+    """Path of one robustness-pilot instance file (data/tsplib_robustness_pilot/<name>.tsp.gz)."""
+    return ROBUSTNESS_PILOT_DATA_FOLDER / f"{instance_name}.tsp.gz"
+
+
 def instance_file_path(instance_name):
     """Return the path of the original compressed file for one instance, e.g. data/.../eil51.tsp.gz."""
     return TSPLIB_DATA_FOLDER / f"{instance_name}.tsp.gz"

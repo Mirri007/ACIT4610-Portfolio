@@ -14,7 +14,12 @@ import gzip
 import numpy as np
 import pytest
 
-from src.tsp_instances import TSP_INSTANCES, instance_file_path
+from src.tsp_instances import (
+    ROBUSTNESS_PILOT_INSTANCES,
+    TSP_INSTANCES,
+    instance_file_path,
+    robustness_instance_file_path,
+)
 from src.tsp_tour import (
     closed_route_city_ids,
     compute_distance_matrix,
@@ -117,6 +122,20 @@ def test_published_optimal_tours_have_published_lengths(name):
     optimal_tour = load_reference_tour(REFERENCE_TOURS_FOLDER / f"{name}.opt.tour.gz")
     assert is_valid_tour(optimal_tour, instance.dimension)
     assert tour_length(optimal_tour, distances) == published_optimum
+
+
+@pytest.mark.parametrize("name", ["pr76", "ch130"])  # rat99 has no published optimal tour
+def test_robustness_pilot_instances_reproduce_published_optima(name):
+    expected_cities, published_optimum = ROBUSTNESS_PILOT_INSTANCES[name]
+    instance = load_tsplib_instance(robustness_instance_file_path(name), name, expected_cities)
+    distances = compute_distance_matrix(instance.coordinates)
+    optimal_tour = load_reference_tour(REFERENCE_TOURS_FOLDER / f"{name}.opt.tour.gz")
+    assert tour_length(optimal_tour, distances) == published_optimum
+
+
+def test_rat99_loads():
+    instance = load_tsplib_instance(robustness_instance_file_path("rat99"), "rat99", 99)
+    assert instance.coordinates.shape == (99, 2)
 
 
 # ---------------------------------------------------------------- random tours and validity

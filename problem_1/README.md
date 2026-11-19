@@ -10,6 +10,7 @@ dependencies (see the main [README](../README.md)).
 | Path | Contents |
 |------|----------|
 | `data/tsplib_original/` | The six original TSPLIB files (`.tsp.gz`), unmodified |
+| `data/tsplib_robustness_pilot/` | pr76, rat99, ch130 from the same TSPLIB source, used **only** for the robustness check |
 | `src/tsplib.py` | Loads a `.tsp.gz` file and validates NAME, TYPE, DIMENSION, EDGE_WEIGHT_TYPE, NODE_COORD_SECTION, row count, unique ids |
 | `src/tsp_tour.py` | Rounded EUC_2D distance matrix, tour length (incl. return leg), random tours, tour validation |
 | `src/tsp_neighbourhoods.py` | Swap move and segment-reversal move |
@@ -58,9 +59,10 @@ incomplete 195th iteration. Every candidate counts, including rejected neighbour
 Neighbourhoods: **swap** (exchange the cities at two random positions) and **reversal** (reverse the
 segment between two random positions). Each recruited bee = one random move from its site; city 1 never moves.
 
-Settings were chosen with a pilot study on different seeds (100–104):
-`python -m experiments.tsp_pilot_settings` → `results/tables/tsp_pilot_settings.csv`
-(reasoning in [docs/implementation_notes.md](../docs/implementation_notes.md)).
+Settings were chosen with a pilot study (eil51, kroA100, ch150; seeds 100–104). A robustness
+check run *afterwards* on three non-assignment instances (pr76, rat99, ch130; seeds 200–204) did not
+change the settings, and D was best there in every combination. The full chronology and limitations
+are in [docs/implementation_notes.md](../docs/implementation_notes.md), section 6.
 
 ## Part A: commands
 
@@ -78,9 +80,25 @@ python -m experiments.run_tsp_experiments
 # Tables and figures from the saved results
 python -m experiments.make_tsp_tables
 python -m experiments.make_tsp_plots
+
+# Settings pilot (how the settings were chosen) and the later robustness check (about 1 minute each)
+python -m experiments.tsp_pilot_settings
+python -m experiments.tsp_robustness_pilot
+
+# Audits (exit code 0 = passed, 1 = problems found and listed)
+python -m experiments.audit_tsp_results   # independent re-check of all 120 saved runs + summary table
+python -m experiments.audit_tsp_trace     # logs every evaluation of 2 real runs and rebuilds the BA logic
 ```
 
 Finished runs are skipped when the experiment is restarted; add `--overwrite` to re-run them.
+
+**What the audits do.**
+- `audit_tsp_results` imports no project code. It re-reads the original data, recomputes every tour
+  length with its own distance code, and checks permutations, settings, evaluation counts, gaps and
+  histories. It also recomputes the summary table with Python's `statistics` module.
+- `audit_tsp_trace` runs the real algorithm with logging and checks, iteration by iteration, that the
+  elite site (best tour) gets 100 recruits, the second-best gets 50, sites keep only improvements,
+  4 scouts follow, and the run stops at exactly 30,000 evaluations.
 
 ## Part A: outputs
 
@@ -91,6 +109,7 @@ Finished runs are skipped when the experiment is restarted; add `--overwrite` to
 | `results/raw/tsp_all_runs.csv` | All 120 runs in one table, including final tours |
 | `results/tables/tsp_summary.csv` / `.md` | Required summary table (instance, cities, optimum, best, mean, std, mean gap, mean runtime) |
 | `results/tables/tsp_pilot_settings.csv` | Pilot study used to choose the settings |
+| `results/tables/tsp_robustness_pilot.csv` / `.md` | Later robustness check on pr76, rat99, ch130 (not used for selection) |
 | `results/figures/tsp_convergence_berlin52.png`, `tsp_convergence_ch150.png` | Mean best-so-far vs evaluations, both neighbourhoods, optimum marked |
 | `results/figures/tsp_route_berlin52.png` | Shortest berlin52 tour over all 20 runs, with return leg and labels |
 | `results/tsp_experiment_log.txt` | Console log of the full experiment run |

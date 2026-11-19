@@ -244,9 +244,25 @@ settings and seeds for both versions.
    remain: 100 go to the elite site and 18 to the selected site, then the budget is exhausted.
    The assignment explicitly allows this incomplete final iteration.
 5. **How did you choose the parameters?**
-   With a pilot study on different seeds (100–104), comparing four settings. Concentrating bees on
-   few sites gave about half the gap of the "many sites" setting (65.94 % vs 130.73 % average).
-   The settings are a reasonable choice, not proven optimal.
+   With a pilot study comparing four settings on eil51, kroA100 and ch150, using seeds 100–104
+   (not the experiment seeds). Concentrating bees on few sites gave about half the gap of the
+   "many sites" setting (65.94 % vs 130.73 % average). Be ready to state the limitations honestly:
+   - The pilot used three of the six test instances.
+   - Ranked by placement instead of average gap, C and D tie.
+   - D was the edge of the range we tried.
+   - Before the pilot, one timing run of setting A with seed 0 was seen. It made us run a pilot,
+     but it was not used to choose.
+
+6. **Doesn't tuning on test instances bias your results?**
+   It could, so we checked afterwards. On three different TSPLIB instances (pr76, rat99, ch130)
+   with new seeds (200–204), D was best in all six instance × neighbourhood combinations. That
+   check came after the experiments and did not change anything; it only confirms that D was not
+   just lucky on the test instances.
+
+7. **Was the pilot fair to both neighbourhoods?**
+   Yes. Both got the same candidates, instances, seeds and budget, and D was best for each
+   neighbourhood separately. Reversal beat swap in every pilot comparison, so "reversal is better"
+   does not depend on which setting we chose. D does make the difference larger.
 
 ### 8. Common mistakes
 - Forgetting to count rejected neighbours as evaluations.
