@@ -280,3 +280,135 @@ Measured on an Apple M2 with Python 3.11.1: single runs took 0.21–1.12 s, grou
 3. The regenerated summary table differed only in the runtime column.
 4. All four audit scripts (`audit_tsp_results`, `audit_tsp_trace`, `audit_continuous_results`,
    `audit_continuous_trace`) returned exit code 0.
+
+---
+
+## Problem 2: Evolution Strategies for portfolio optimisation
+
+### 1. Structure
+
+- `portfolio_data.py`: parse and validate the files, build Σ, compute targets, define the 15 cases.
+- `portfolio_model.py`: return, variance, simplex projection, repair, tolerances.
+- `portfolio_evaluator.py`: repair + evaluate + count + archive, shared by all three variants.
+- `es_one_plus_one.py` and `es_population.py`: the variants.
+- `run_es.py`: one run → one result record.
+
+As in Problem 1, all evaluations pass through a single method (`PortfolioEvaluator.evaluate`), so
+counting, repair and archiving are identical for all three variants.
+
+### 2. Data validation (2026-11-19)
+
+All five files have exactly n(n+1)/2 correlation records with i ≤ j and no duplicates (the diagonal
+is included and always 1). All correlations lie in [−1, 1]. The parser checks all of this **line by
+line**.
+
+A first token-based version accepted the file as one stream of numbers. A test exposed that a wrong
+asset count then shifts every following number; it was still rejected, but with a misleading message.
+The line-based version reports the exact faulty line.
+
+All five covariance matrices are positive definite (smallest eigenvalue 6.05e−6 for port5), so no
+portfolio can have negative variance. The highest-return asset is unique in every dataset, so the
+return repair always uses a well-defined asset.
+
+### 3. Design decisions and interpretations
+
+- **The repaired portfolio is the individual.** The ES stores the repaired, feasible w (not the raw
+  z) and mutates from it. This follows the assignment's wording: "add … to each weight and repair the
+  child"; "retain the child". Every individual is therefore feasible. (Storing the raw z and repairing
+  only for evaluation would be the alternative, sometimes called Baldwinian repair.)
+- **Two *different* parents** are chosen for each child (uniformly, without replacement). With the
+  same parent twice, recombination would just copy it.
+- **Ties in survivor selection** keep the earlier individual (stable sort; parents before offspring).
+- **Incomplete final batch.** 30,000 = 10 + 428 × 70 + 30. The 30 children of the last batch are
+  evaluated and can enter the archive, but no survivor selection follows, because no further
+  generation would use it.
+- **Order of random draws per child:** choose parents, then Z₀, then Z_i (n numbers), then the
+  mutation normals (n numbers). For the same seed, (μ+λ) and (μ,λ) draw identically during
+  initialisation, so they start from the **same 10 parents**. The audit checks this. It makes the
+  per-seed comparison between plus and comma *paired*.
+- **Single-threaded BLAS in the experiment scripts.** In a preliminary measurement (seeds 900–904),
+  OpenBLAS multi-threading made port5 runs about twice as slow and erratic (e.g. 4.77 s vs 2.66 s for
+  repeats of the same run), with bit-identical results. Runtime is a reported metric compared between
+  variants, so the experiments run single-threaded. Problem 1 is unaffected, because it uses no BLAS
+  operations.
+
+### 4. Seeds and tuning
+
+- **Final seeds 0–9:** used only for the 450 reported runs.
+- **Seeds 900–904:** used for the smoke test and timing measurements.
+- **Seeds ≥ 1000:** used inside the tests.
+
+No parameter was tuned: μ, λ, the initial step sizes, the step-size bounds, the 1/5-rule factors,
+τ and τ' are all fixed by the assignment.
+
+### 5. Verification
+
+- **Tests:** 119 automated tests. Highlights:
+  - the port1 checkpoint;
+  - the assignment's A/B example;
+  - variance against an explicit double loop;
+  - simplex projection against an independent bisection method, plus the closest-point property;
+  - repair feasibility on all 15 cases;
+  - a rebuilt (1+1) step-size sequence, with the mutation noise standardised to N(0, 1);
+  - rebuilt plus/comma selection;
+  - Z₀ shared within a child, checked statistically through the real child-creation code.
+- **Planted bugs:** 12 were planted. 11 were caught at first; the twelfth (Z₀ drawn per coordinate)
+  exposed a missing test, which was added, and it is now caught.
+- **Audits:**
+  - `audit_es_results` (plain Python, no project code): all 450 runs and the 45 summary rows pass.
+    It was shown to fail when a single weight is changed by 1e−7.
+  - `audit_es_trace`: six full-budget runs (three variants × port5_alpha050 and port1_alpha075,
+    seed 0) are rebuilt rule by rule and reproduce the saved results exactly.
+
+### 6. Results in brief (details in `problem_2/results/tables/`)
+
+- All 450 final allocations are feasible (10/10 valid runs in every case), and no invalid candidate
+  was ever evaluated.
+- **(1+1)-ES is worst in all 150 paired comparisons** against both population variants.
+- **(μ+λ) vs (μ,λ):** the lowest mean in 7 vs 8 cases; (μ,λ) is lower in 84 of 150 seed pairs.
+  A two-sided sign test gives p = 0.165, so this is **not a significant difference**. Per case, the
+  difference in mean variance is at most 5 %. On port1 both reach practically the same value.
+- **Convergence (port5_alpha050):**
+  - The population variants improve steeply up to about 5,000 evaluations, then slowly.
+  - (1+1) improves faster in the first ~1,500 evaluations but flattens by ~5,000.
+
+### 7. Why the (1+1)-ES stagnates (evidence from `es_analysis.md`)
+
+**Observations:**
+- **Step size collapse.** Its success rate averaged 18.8 % (range 14.2–19.9 %), i.e. slightly
+  *below* 1/5 throughout. So the 1/5 rule shrinks σ almost continuously, and 126/150 runs end with
+  σ < 10⁻⁷ (the bound is 10⁻⁸).
+- **Early stagnation.** Median: within 1 % of its final variance after 3,890 evaluations, yet tiny
+  "improvements" continue until evaluation 29,997.
+- **Not sparse.** Its final portfolios hold on average 67.6 assets with weight > 10⁻⁶, against
+  14.7 / 14.6 for (μ+λ) / (μ,λ). The low-variance portfolios found by the population variants are
+  sparse.
+
+**Explanation (consistent with the data, not proven):**
+- A weight reaches exactly 0 only when mutation pushes it below θ, so that the projection cuts it off.
+- With one shared σ that has already shrunk, the many small weights can no longer be removed, and
+  (1+1) stays in a too-diversified region.
+- The repair also creates kinks: weights are cut at 0, and the return is pinned exactly at R_min in
+  48/150 (1+1) runs versus 124/150 for (μ+λ). Near a kink, smaller steps do not raise the success
+  rate towards 1/2 as they would on a smooth function. The 1/5 rule therefore keeps shrinking σ. This
+  is a known weakness of the 1/5 success rule on constrained problems.
+- The population ES has a separate step size per weight, recombination (averaging two sparse
+  parents), and selection among 70 children. That lets it keep moving weights to 0.
+
+### 8. Limitations and weaknesses (to mention in the report)
+
+1. **No absolute quality measure.** The assignment limits conclusions to relative performance, and
+   no exact optimum (e.g. from a quadratic-programming solver) was computed, so we cannot say how far
+   any variant is from the true minimum variance. (This is a candidate for the planned critical review.)
+2. **Interpretation choices** in section 3 (distinct parents, tie-breaking, Lamarckian repair, no
+   selection after the last partial batch) could slightly change results under other readings.
+3. **Comparisons with (1+1) are not paired.** (1+1) starts from a single random portfolio, while the
+   population variants start from 10, so their initial best values differ. The 150/150 result makes
+   this immaterial for the conclusion.
+4. **The sign test** treats the 150 seed pairs as independent, although they come from only 15
+   cases; it is a rough check, not a full statistical analysis.
+5. **Runtime** is from one machine (Apple M2), single-threaded. Absolute times will differ elsewhere;
+   ratios between the variants are more meaningful.
+6. **Feasible-run rate is 10/10 everywhere.** The repair guarantees feasibility by construction, so
+   this column cannot discriminate between the variants.
+7. **Historical data.** Results say nothing about future investment performance.

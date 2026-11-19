@@ -112,53 +112,53 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done **and verified**
 
 | ID | Requirement | Status | Evidence / note |
 |----|-------------|--------|-----------------|
-| E1 | Use all five OR-Library files port1–5 (31/85/89/98/225 assets; 496/3655/4005/4851/25425 records) | [~] | Downloaded; line counts match the PDF's table |
-| E2 | Parse: line 1 = n; next n lines = mean return, std dev; then records (i, j, ρ_ij), store in both C_ij and C_ji; indices 1-based → subtract 1 | [ ] | |
-| E3 | Covariance Σ_ij = s_i · s_j · C_ij (symmetric) | [ ] | |
-| E4 | R(w) = rᵀw; objective V(w) = wᵀΣw (**variance**, never std dev) | [ ] | |
-| E5 | Constraints: w_i ≥ 0, Σw_i = 1, R(w) ≥ R_min | [ ] | |
-| E6 | Targets: R_eq = rᵀu (u_i=1/n), r_max = max r_i, R_min(α) = (1−α)R_eq + α·r_max, α ∈ {0.25, 0.50, 0.75} → **15 cases** | [ ] | Case names: `port1_alpha025` … `port5_alpha075` (PDF example blank; to confirm) |
-| E7 | port1 checkpoint: R_eq ≈ 0.003504064516129, V(u) ≈ 0.001130937943724, R_min(0.5) ≈ 0.007184532258065 | [~] | Throwaway script reproduced all three values exactly; becomes a unit test |
+| E1 | Use all five OR-Library files port1–5 (31/85/89/98/225 assets; 496/3655/4005/4851/25425 records) | [x] | All five files; counts verified by parser and tests |
+| E2 | Parse: line 1 = n; next n lines = mean return, std dev; then records (i, j, ρ_ij), store in both C_ij and C_ji; indices 1-based → subtract 1 | [x] | Line-by-line parser with validation; independent parser test |
+| E3 | Covariance Σ_ij = s_i · s_j · C_ij (symmetric) | [x] | `build_covariance`; symmetric, positive definite (tests) |
+| E4 | R(w) = rᵀw; objective V(w) = wᵀΣw (**variance**, never std dev) | [x] | `expected_return`, `portfolio_variance`; double-loop test |
+| E5 | Constraints: w_i ≥ 0, Σw_i = 1, R(w) ≥ R_min | [x] | `feasibility_violations`; tolerance tests |
+| E6 | Targets: R_eq = rᵀu (u_i=1/n), r_max = max r_i, R_min(α) = (1−α)R_eq + α·r_max, α ∈ {0.25, 0.50, 0.75} → **15 cases** | [x] | `build_case`; 15 cases `port1_alpha025`…`port5_alpha075` |
+| E7 | port1 checkpoint: R_eq ≈ 0.003504064516129, V(u) ≈ 0.001130937943724, R_min(0.5) ≈ 0.007184532258065 | [x] | Test reproduces all three values (abs 1e-15) |
 
 ### Repair and feasibility
 
 | ID | Requirement | Status |
 |----|-------------|--------|
-| E8 | Every candidate repaired **before** evaluation | [ ] |
-| E9 | Step 1: simplex projection q_i = max(z_i − θ, 0), θ chosen so Σq = 1 | [ ] |
-| E10 | Step 2: if R(q) ≥ R_min accept; else β = (R_min − R(q))/(r_max − R(q)), w = (1−β)q + β·e_j, j = argmax r | [ ] |
-| E11 | Final solutions satisfy w_i ≥ −1e−8, abs(Σw − 1) ≤ 1e−8, R(w) ≥ R_min − 1e−8 | [ ] |
+| E8 | Every candidate repaired **before** evaluation | [x] | `PortfolioEvaluator.evaluate` repairs before computing variance 
+| E9 | Step 1: simplex projection q_i = max(z_i − θ, 0), θ chosen so Σq = 1 | [x] | `project_onto_simplex`; hand, bisection and closest-point tests 
+| E10 | Step 2: if R(q) ≥ R_min accept; else β = (R_min − R(q))/(r_max − R(q)), w = (1−β)q + β·e_j, j = argmax r | [x] | `repair_portfolio`; worked example + all-case tests 
+| E11 | Final solutions satisfy w_i ≥ −1e−8, abs(Σw − 1) ≤ 1e−8, R(w) ≥ R_min − 1e−8 | [x] | Checked per evaluation and per final run; 450/450 feasible (independent audit) 
 
 ### ES variants
 
 | ID | Requirement | Status |
 |----|-------------|--------|
-| E12 | (1+1)-ES: init w ~ U[0,1]ⁿ then repair | [ ] |
-| E13 | (1+1)-ES: child = parent + σ·N(0,1) per weight, repair; keep child only if variance **strictly lower** | [ ] |
-| E14 | (1+1)-ES: σ₀ = 0.1/√n, σ ∈ [1e−8, 1.0]; σ·exp(1/3) on success, σ·exp(−1/12) otherwise, per trial | [ ] |
-| E15 | Population ES: μ = 10, λ = 70; parents initialised as (1+1); σ vector initialised 0.1/√n; clamp every updated σ to [1e−8, 1.0] | [ ] |
-| E16 | Recombination: two parents uniformly at random; w_r = mean of the two; σ_r,i = √(σ_i⁽¹⁾σ_i⁽²⁾) | [ ] |
-| E17 | Self-adaptation: σ'_i = σ_r,i · exp(τ'Z₀ + τZ_i), τ' = 1/√(2n), τ = 1/√(2√n); Z₀ shared per child | [ ] |
-| E18 | Then w_r + σ'_i·N(0,1) (fresh draws), repair, store σ' with child | [ ] |
-| E19 | (μ+λ): best μ from parents ∪ offspring | [ ] |
-| E20 | (μ,λ): best μ from offspring only | [ ] |
-| E21 | All variants: separate archive of best valid allocation incl. initialisation; returned at end; in (μ,λ) archive is **not** used for parent selection | [ ] |
+| E12 | (1+1)-ES: init w ~ U[0,1]ⁿ then repair | [x] | `run_one_plus_one_es` init 
+| E13 | (1+1)-ES: child = parent + σ·N(0,1) per weight, repair; keep child only if variance **strictly lower** | [x] | Strict acceptance; rebuilt in trace test/audit 
+| E14 | (1+1)-ES: σ₀ = 0.1/√n, σ ∈ [1e−8, 1.0]; σ·exp(1/3) on success, σ·exp(−1/12) otherwise, per trial | [x] | σ0, factors, clamp; σ sequence rebuilt in trace 
+| E15 | Population ES: μ = 10, λ = 70; parents initialised as (1+1); σ vector initialised 0.1/√n; clamp every updated σ to [1e−8, 1.0] | [x] | μ=10, λ=70, σ0 vector, clamp (tests, audit) 
+| E16 | Recombination: two parents uniformly at random; w_r = mean of the two; σ_r,i = √(σ_i⁽¹⁾σ_i⁽²⁾) | [x] | `recombine`; two different parents (documented interpretation) 
+| E17 | Self-adaptation: σ'_i = σ_r,i · exp(τ'Z₀ + τZ_i), τ' = 1/√(2n), τ = 1/√(2√n); Z₀ shared per child | [x] | `self_adapt_step_sizes`; Z0 sharing tested via real `create_child` 
+| E18 | Then w_r + σ'_i·N(0,1) (fresh draws), repair, store σ' with child | [x] | `create_child` mutates with σ', stores σ' 
+| E19 | (μ+λ): best μ from parents ∪ offspring | [x] | `select_survivors('plus')`; rebuilt in trace 
+| E20 | (μ,λ): best μ from offspring only | [x] | `select_survivors('comma')`; rebuilt in trace 
+| E21 | All variants: separate archive of best valid allocation incl. initialisation; returned at end; in (μ,λ) archive is **not** used for parent selection | [x] | Evaluator archive incl. initialisation; never used for parents 
 
 ### Protocol, outputs, analysis
 
 | ID | Requirement | Status |
 |----|-------------|--------|
-| E22 | Same cases, repair, **10 seeds**, 30,000 evals for all three variants → 15 × 3 × 10 = **450 runs** | [ ] |
-| E23 | Count initialisation and every evaluated candidate incl. rejected; stop at budget; final batch may have < 70 offspring and is included in archive update | [ ] |
-| E24 | Per run: best valid allocation, expected return, variance, runtime | [ ] |
-| E25 | Variance statistics over **valid** runs; report # valid of 10; mean runtime over all 10 | [ ] |
-| E26 | Summary table, 15 cases × 3 variants: case, n, target return, best + mean variance, std, feasible-run rate, mean runtime | [ ] |
-| E27 | Convergence plot for **one case only**: evaluations vs mean archive-best variance, all three variants on one plot | [ ] |
-| E28 | Consistent variant labels and case identifiers; captions, axis labels, units | [ ] |
-| E29 | Code: 3 ES, common repair + validation, experiment scripts, original datasets, raw per-run results, convergence logs | [ ] |
-| E30 | README: setup, dependencies + versions, dataset sources, seeds, parameters, commands for one case + full set | [ ] |
+| E22 | Same cases, repair, **10 seeds**, 30,000 evals for all three variants → 15 × 3 × 10 = **450 runs** | [x] | 450 JSON files, seeds 0–9 
+| E23 | Count initialisation and every evaluated candidate incl. rejected; stop at budget; final batch may have < 70 offspring and is included in archive update | [x] | 10 + 428×70 + 30; final batch archived (trace audit) 
+| E24 | Per run: best valid allocation, expected return, variance, runtime | [x] | Saved per run (JSON + `es_all_runs.csv`) 
+| E25 | Variance statistics over **valid** runs; report # valid of 10; mean runtime over all 10 | [x] | `make_es_tables` (valid-run statistics, runtime over all 10) 
+| E26 | Summary table, 15 cases × 3 variants: case, n, target return, best + mean variance, std, feasible-run rate, mean runtime | [x] | `results/tables/es_summary.md/.csv` (45 rows) 
+| E27 | Convergence plot for **one case only**: evaluations vs mean archive-best variance, all three variants on one plot | [x] | `results/figures/es_convergence_port5_alpha050.png` (log y-axis labelled) 
+| E28 | Consistent variant labels and case identifiers; captions, axis labels, units | [x] | Fixed labels (1+1)-ES, (μ+λ)-ES, (μ,λ)-ES and colours 
+| E29 | Code: 3 ES, common repair + validation, experiment scripts, original datasets, raw per-run results, convergence logs | [x] | src/, experiments/, data/, raw results, convergence logs 
+| E30 | README: setup, dependencies + versions, dataset sources, seeds, parameters, commands for one case + full set | [x] | `problem_2/README.md` 
 
-Notes on E27: the case name is blank in the PDF text. The student's notes say `port5_alpha050`; this must be confirmed against the original PDF.
+Notes on E27: case `port5_alpha050`, confirmed by the student against the original PDF.
 
 ### P2 report content (student writes)
 

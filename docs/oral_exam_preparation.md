@@ -550,3 +550,315 @@ From `results/tables/continuous_summary.md` (10 runs each):
 - **Discrete vs continuous:**
   - In Part A, one move changes only a few edges, so the search can make small, precise changes.
   - In Part B, every move changes all coordinates by a fixed amount, which limits precision.
+
+---
+
+# Problem 2: Evolution Strategies for portfolio optimisation
+
+## Words you need first
+
+| Term | Meaning |
+|------|---------|
+| **Portfolio / weights w** | How the budget is split over n assets; w_i is the fraction in asset i (0.25 = 25 %). |
+| **Expected return R(w) = rᵀw** | The weighted average of the assets' mean returns. |
+| **Variance V(w) = wᵀΣw** | Our risk measure and the **objective** (lower = less risky). |
+| **Standard deviation s_i** | How much asset i's return fluctuates. Variance = std². |
+| **Correlation C_ij** | How assets i and j move together: +1 together, 0 unrelated, −1 opposite. |
+| **Covariance matrix Σ** | Σ_ij = s_i·s_j·C_ij. Diagonal = each asset's own variance. |
+| **Diversification** | Combining assets that do not move together lowers total variance. |
+| **Constraint** | A rule a solution must satisfy (w ≥ 0, Σw = 1, R(w) ≥ R_min). |
+| **Feasible** | Satisfies all constraints (here: within the 1e−8 tolerances). |
+| **Probability simplex** | All vectors with non-negative entries that sum to 1 (= all valid budget splits). |
+| **Projection** | Moving a point to the nearest point of a set. |
+| **Evolution Strategy (ES)** | An evolutionary algorithm for real numbers: Gaussian mutation, a step size σ that adapts, selection. |
+| **Step size σ** | The standard deviation of the random mutation: how far children move from parents. |
+| **Self-adaptation** | Each individual carries its own σ values, which are mutated and inherited; good σ survive with good solutions. |
+| **Plus / comma selection** | Survivors chosen from parents + children (plus), or children only (comma). |
+| **Archive** | A separate record of the best valid solution ever evaluated. |
+
+---
+
+## Component 9: Data, covariance and return targets
+
+File: `problem_2/src/portfolio_data.py`
+
+### 1. What it does
+It reads each OR-Library file, checks it, builds the correlation and covariance matrices, and
+computes the three return targets per dataset (15 cases).
+
+### 2. How it works
+1. Line 1 = n. Next n lines = mean return and std of each asset.
+2. Remaining lines = "i j correlation" for every pair with i ≤ j, including i = j (always 1).
+   n(n+1)/2 lines in total (496 for n = 31).
+3. Store each correlation in C[i−1, j−1] **and** C[j−1, i−1]. The files are 1-based and Python is 0-based.
+4. Σ = s_i·s_j·C_ij for all pairs: `np.outer(s, s) * C`.
+5. R_eq = mean of r (return of equal weights 1/n); r_max = largest r_i;
+   R_min(α) = (1 − α)·R_eq + α·r_max for α = 0.25, 0.50, 0.75.
+
+### 3. Why
+- Strict validation (line structure, counts, duplicates, ranges, diagonal = 1) prevents silently wrong
+  matrices.
+- The targets lie between "equal weights" and "best single asset", so a larger α means a harder
+  return requirement.
+
+### 4. Requirements
+E1–E7, including the port1 checkpoint (R_eq = 0.003504064516129, V(u) = 0.001130937943724,
+R_min(0.5) = 0.007184532258065), reproduced exactly in a test.
+
+### 5. Example
+port1, assets 1 and 2: s₁ = 0.043208, s₂ = 0.040258, C₁₂ = 0.562289 →
+Σ₁₂ = 0.043208 × 0.040258 × 0.562289 ≈ 0.000978.
+
+### 6. Parameters
+α ∈ {0.25, 0.50, 0.75}.
+
+### 7. Likely questions
+1. **Why store the correlation twice?**
+   The file lists each pair once (i ≤ j), but correlation is symmetric. The variance formula uses
+   both Σ_ij and Σ_ji.
+2. **How did you validate the parser?**
+   - The port1 checkpoint values from the assignment.
+   - A second, independent parser in the tests gives identical numbers for all five files.
+   - The covariance is symmetric and positive definite, with the diagonal equal to s².
+   - Broken files are rejected, one test per rule.
+3. **What does positive definite mean, and why check it?**
+   Every non-zero portfolio has variance > 0. If Σ were not positive definite, some portfolios would
+   have negative "variance", which is impossible, and the optimiser could exploit it.
+4. **Why does α = 0.75 give a higher variance?**
+   The return must be closer to the best single asset, so the portfolio must concentrate more on
+   high-return, usually riskier, assets. Fewer allocations are allowed, and the minimum variance rises.
+5. **What is a case name?**
+   For example `port5_alpha050`: dataset port5, α = 0.50.
+
+### 8. Common mistakes
+- Filling only half of C.
+- Forgetting to subtract 1 from the indices.
+- Using standard deviation instead of variance as the objective. (The assignment says variance throughout.)
+
+---
+
+## Component 10: Repair (simplex projection + return repair) and feasibility
+
+File: `problem_2/src/portfolio_model.py`
+
+### 1. What it does
+It turns any vector produced by mutation or recombination into a valid portfolio before its variance
+is computed.
+
+### 2. How it works
+1. **Simplex projection:** q_i = max(z_i − θ, 0) with θ such that Σq = 1.
+   θ is found by sorting z from largest to smallest and testing how many of the largest entries
+   stay positive.
+2. **Return repair:** if R(q) < R_min, mix q with "all money in the best asset j":
+   w = (1 − β)q + βe_j, β = (R_min − R(q)) / (r_max − R(q)). This gives exactly R(w) = R_min.
+3. **Feasibility check:** w_i ≥ −1e−8, |Σw − 1| ≤ 1e−8, R(w) ≥ R_min − 1e−8.
+
+### 3. Why
+- The assignment prescribes this repair.
+- Repair (instead of rejection or penalties) means every evaluated portfolio is valid, so the ES can
+  simply compare variances.
+- Projection is the *smallest* change that makes z non-negative and summing to 1. The return repair
+  moves only as far towards the best asset as needed.
+
+### 4. Requirements
+E8–E11.
+
+### 5. Examples
+- Projection: z = (0.3, 0.2, −0.5) → θ = −0.25 → q = (0.55, 0.45, 0).
+- Return repair: r = (2 %, 6 %, 10 %), R_min = 4 %, q = (0.8, 0.2, 0) has R(q) = 2.8 %.
+  β = (0.04 − 0.028)/(0.10 − 0.028) = 1/6, so w = (2/3, 1/6, 1/6) with R(w) = 4 %.
+
+### 6. Parameters
+Tolerance 1e−8.
+
+### 7. Likely questions
+1. **Why is the result of the return repair still on the simplex?**
+   It is a weighted average (weights 1 − β and β, both between 0 and 1) of two portfolios that are
+   both non-negative and sum to 1.
+2. **Why exactly R_min after repair?**
+   Return is linear: R(w) = (1 − β)R(q) + β·r_max = R(q) + β(r_max − R(q)) = R_min.
+3. **How did you test the projection?**
+   - Hand examples.
+   - Comparison with a completely different algorithm (bisection on θ) on 300 random vectors.
+   - The closest-point property: no random simplex point is closer to z.
+   - Applying the projection twice changes nothing.
+4. **Why tolerances?**
+   Floating-point arithmetic rounds, e.g. a sum of 0.9999999999999999. The tolerances accept
+   rounding but reject real violations; tests check both sides of every bound.
+5. **Does the repair influence the search?**
+   Yes, strongly. It cuts weights to exactly 0 and pins the return at R_min. This creates "kinks" in
+   the landscape, which is part of why the (1+1)-ES stagnates (Component 13).
+
+### 8. Common mistakes
+- Normalising by dividing by the sum (that is not a projection, and fails with negative entries).
+- Using the asset with the largest *weight* instead of the largest *return* in step 2.
+
+---
+
+## Component 11: (1+1)-ES and the 1/5th success rule
+
+File: `problem_2/src/es_one_plus_one.py`
+
+### 1. What it does
+It keeps one parent portfolio and, 29,999 times, creates one mutated child. The child replaces the
+parent only if it has strictly lower variance.
+
+### 2. How it works
+1. Parent = repair(uniform [0, 1] random weights). σ = 0.1/√n.
+2. Child = repair(parent + σ·N(0, 1) per weight). One evaluation.
+3. If V(child) < V(parent): replace the parent, and σ ← σ·e^(1/3) (about ×1.40).
+   Otherwise σ ← σ·e^(−1/12) (about ×0.92). Keep σ in [1e−8, 1].
+
+### 3. Why
+These are the assignment's rules. The two factors balance exactly at a success rate of 1/5:
+p/3 − (1 − p)/12 = 0 ⇔ p = 1/5. More successes → bigger steps; fewer → smaller steps.
+
+### 4. Requirements
+E12–E14, E21–E23.
+
+### 5. Example
+σ = 0.01. A success gives 0.01 × 1.3956 = 0.0140; a failure gives 0.01 × 0.9200 = 0.0092.
+Four failures and one success: 0.01 × 0.92⁴ × 1.3956 ≈ 0.0100. Unchanged on average, as intended.
+
+### 6. Parameters
+σ₀ = 0.1/√n, factors e^(1/3) and e^(−1/12), bounds [1e−8, 1].
+
+### 7. Likely questions
+1. **Why does the (1+1)-ES perform worst everywhere?**
+   - Its success rate stayed slightly below 1/5 (18.8 % on average), so σ shrank throughout.
+     126/150 runs ended with σ < 10⁻⁷.
+   - It reached within 1 % of its final value after a median of 3,890 evaluations and then stagnated.
+   - Its portfolios keep about 68 assets, while the population ES finds sparse portfolios with about
+     15 assets. With one tiny σ, small weights can no longer be pushed to 0.
+2. **Why σ₀ = 0.1/√n?**
+   A mutation changes all n weights. Its total length grows like σ·√n, so dividing by √n keeps the
+   initial total step about 0.1 for any n.
+3. **What is "plus" about (1+1)?**
+   The parent competes with its child, so the parent's variance never gets worse (elitism).
+4. **How did you verify the implementation?**
+   From a log of a real run, we rebuilt every accept/reject decision and the full σ sequence. Then
+   (candidate − parent)/σ was checked to be standard normal: mean −0.0002, std 0.9997 on port5.
+   Planted bugs in the factors, σ₀ or the acceptance rule were all caught.
+5. **Is the step-size collapse a bug?**
+   No. The trace confirms the rules are followed exactly. It is a known weakness of the 1/5 rule on
+   constrained problems: near constraint boundaries, smaller steps do not raise the success rate
+   enough.
+
+### 8. Common mistakes
+- Accepting equal or worse children.
+- Updating σ only on success.
+- Forgetting the clamp.
+
+---
+
+## Component 12: Population ES, (μ+λ) and (μ,λ)
+
+File: `problem_2/src/es_population.py`
+
+### 1. What it does
+It keeps 10 parents, each with weights and its own step size per weight, creates 70 children per
+generation, and keeps the 10 best.
+
+### 2. How it works (per child)
+1. Choose two **different** parents at random.
+2. Weights: average of the two parents. Step sizes: geometric mean √(σ⁽¹⁾σ⁽²⁾).
+3. Self-adaptation: σ'_i = σ_i·exp(τ'·Z₀ + τ·Z_i), with τ' = 1/√(2n) and τ = 1/√(2√n).
+   Z₀ is one number for the whole child; Z_i is one per coordinate. Clamp to [1e−8, 1].
+4. Mutate with the **new** σ': z_i = w_i + σ'_i·N_i, then repair and evaluate.
+5. After 70 children:
+   - **plus:** best 10 of 10 parents + 70 children;
+   - **comma:** best 10 of the 70 children only.
+
+Budget: 10 + 428 × 70 + 30 = 30,000, so the last batch has 30 children.
+
+### 3. Why
+- Recombination mixes good portfolios and smooths out noise.
+- A step size per weight allows different scales for different assets.
+- Self-adaptation lets selection tune the step sizes: children whose σ' happened to suit the problem
+  produce better portfolios, survive, and pass on their σ'.
+- Comma selection forgets old parents. That lets the step sizes keep adapting and can escape a stuck
+  population, at the cost of sometimes losing the best individual.
+
+### 4. Requirements
+E15–E23.
+
+### 5. Example
+- Parents' σ = (0.01, 1.0) and (1.0, 0.04): geometric means (0.1, 0.2).
+- With τ' = 0.2, τ = 0.5, Z₀ = 1, Z = (0, −1): σ' = (0.1·e^0.2, 0.2·e^−0.3) = (0.122, 0.148).
+
+### 6. Parameters
+μ = 10, λ = 70 (a 1:7 ratio, a classic choice), τ', τ, σ₀ = 0.1/√n, bounds [1e−8, 1].
+
+### 7. Likely questions
+1. **Why can the population best get worse under comma selection, while the archive cannot?**
+   - Comma discards all parents every generation. If all 70 children are worse than the best parent,
+     the new best is worse. This happened in 193 of 428 generations in one port5 run (supplementary
+     figure).
+   - The archive is a separate record that only changes when something strictly better appears, so
+     the reported result never gets worse.
+   - The archive is never used to choose parents.
+2. **Why the geometric mean for step sizes?**
+   Step sizes act multiplicatively. The geometric mean of 0.01 and 1 is 0.1 (halfway on a log scale);
+   the arithmetic mean 0.505 would let the larger value dominate.
+3. **What do Z₀ and Z_i do?**
+   - Z₀ makes the whole child bolder or more careful at once.
+   - Z_i lets individual coordinates differ.
+   - A test checked through the real code that Z₀ is shared. The coordinates' log-step changes are
+     correlated by τ'²/(τ'² + τ²) ≈ 0.155 for n = 31.
+4. **Which is better, plus or comma?**
+   - On these data, no clear difference: (μ,λ) had the lower mean in 8 of 15 cases and (μ+λ) in 7.
+   - (μ,λ) was lower in 84 of 150 seed pairs, a sign test p = 0.165, so not significant.
+   - Per case, the differences are at most 5 %.
+   - Both clearly beat (1+1), in 150/150 pairs.
+5. **Why are plus and comma comparable seed by seed?**
+   With the same seed they start from the same 10 parents, because initialisation draws the same
+   random numbers. The audit verifies this.
+
+### 8. Common mistakes
+- Mutating with the old σ instead of σ'.
+- Drawing Z₀ per coordinate.
+- Letting comma selection include parents.
+- Using the archive as a parent.
+
+All of these were planted as bugs and caught by the tests.
+
+---
+
+## Component 13: Evaluation counting, archive and results (Problem 2)
+
+Files: `portfolio_evaluator.py`, `run_es.py`, `experiments/*`
+
+### 1. What it does
+`PortfolioEvaluator.evaluate` repairs, computes the variance, counts, and updates the archive with
+the best *valid* portfolio (strictly lower variance), starting from the very first evaluation.
+
+### 2. Results to remember (450 runs, all feasible)
+
+| | (1+1)-ES | (μ+λ)-ES | (μ,λ)-ES |
+|---|---|---|---|
+| Cases with lowest mean variance | 0 | 7 | 8 |
+| Paired wins vs (1+1) | – | 150/150 | 150/150 |
+| Median evaluations to reach within 1 % of final | 3,890 | 13,072 | 13,493 |
+| Mean assets held (weight > 1e−6) | 67.6 | 14.7 | 14.6 |
+
+On port5_alpha050 the final mean variances are 7.27e−4, 3.96e−4 and 3.77e−4.
+
+### 3. Likely questions
+1. **How do you know each run used exactly 30,000 evaluations?**
+   - Every run saves its count, and `run_es_on_case` raises an error otherwise.
+   - The independent audit re-checks all 450 runs.
+   - The trace audit rebuilds 10 + 428 × 70 + 30 for the population variants.
+2. **What does "valid run" mean, and why are all runs valid?**
+   Valid means the returned allocation meets the three tolerances. The repair guarantees it, and the
+   evaluator counts any invalid candidate: there were none.
+3. **Why compare variants on evaluations rather than time or generations?**
+   - Evaluations are the fixed budget and the expensive step.
+   - A (1+1) trial and a population generation cost very different numbers of evaluations, so
+     generations would not be fair.
+   - Runtime is reported separately.
+4. **Can you say how good the best portfolios are in absolute terms?**
+   Not from these experiments. The assignment limits conclusions to relative performance, and we did
+   not compute the exact optimum. This is a stated limitation.
+5. **Why was BLAS set to single-threaded?**
+   Multi-threading made the runtimes about twice as slow and erratic, with identical results.
+   Runtime is a compared metric, so stable timing was needed.
