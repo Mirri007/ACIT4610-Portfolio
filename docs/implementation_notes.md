@@ -269,3 +269,14 @@ coordinates move in helpful directions shrinks.
 ### 6. Runtime
 
 Measured on an Apple M2 with Python 3.11.1: single runs took 0.21–1.12 s, group means (function × D) were 0.22–0.47 s, and the total search time for all 80 runs was 27.5 s.
+
+### 7. Reproducibility check (performed 2026-11-19)
+
+1. Cloned the GitHub repository at commit `eef146c` into an empty folder, created a fresh virtual
+   environment and installed `requirements.txt`. All 165 tests passed, and the single-run command
+   from the README worked.
+2. Re-ran all 80 Part B runs with `--overwrite`. All 80 results were identical to the committed ones
+   in every field except `runtime_seconds`.
+3. The regenerated summary table differed only in the runtime column.
+4. All four audit scripts (`audit_tsp_results`, `audit_tsp_trace`, `audit_continuous_results`,
+   `audit_continuous_trace`) returned exit code 0.
