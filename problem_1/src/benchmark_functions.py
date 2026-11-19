@@ -1,4 +1,4 @@
-# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_development_log.md.
+# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_declaration.md.
 """
 The four continuous benchmark functions of Part B, with their search bounds.
 

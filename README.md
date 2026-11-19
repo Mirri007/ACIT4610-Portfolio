@@ -6,7 +6,7 @@ Code, data and results for the ACIT4610 final portfolio (OsloMet, 2026).
 |--------|----------|--------|
 | [`problem_1/`](problem_1/README.md) | Bees Algorithm: TSP (Part A) and continuous functions (Part B) | Parts A and B done and audited |
 | [`problem_2/`](problem_2/README.md) | Evolution Strategies for portfolio optimisation | Done and audited |
-| `docs/` | Requirements checklist, implementation notes, AI development log, exam notes | |
+| `docs/` | Requirements checklist, implementation notes, declaration of AI use | |
 
 ## Requirements
 
@@ -68,7 +68,7 @@ Independent re-checks of the saved results (exit code 0 = all checks passed). Ru
 | Post-hoc diagnostics and supplementary analyses | `problem_*/supplementary/`, `problem_*/results/supplementary/` | Added after the critical review; explain results, never replace them |
 
 Supplementary analyses need one extra package: `python -m pip install -r requirements-supplementary.txt`
-(SciPy, used only for a reference solver in Problem 2). See `docs/critical_review.md` and the problem READMEs.
+(SciPy, used only for a reference solver in Problem 2). See the problem READMEs and `docs/implementation_notes.md`.
 
 ## Data sources
 
@@ -84,4 +84,4 @@ All original data files are included unmodified.
 
 Code in this repository was generated with AI assistance (Claude Code, Anthropic). Every
 AI-generated Python file starts with an `# AI attribution` header. See
-[`docs/ai_development_log.md`](docs/ai_development_log.md) for what was generated at each stage.
+[`docs/ai_declaration.md`](docs/ai_declaration.md) for the full declaration of AI use.

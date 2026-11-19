@@ -203,7 +203,7 @@ Since every global minimum is 0, each final objective value is the run's objecti
 
 ## Supplementary diagnostics for Part B (post hoc; not part of the required experiments)
 
-Script `supplementary/continuous_diagnostics.py` (added after the critical review, `docs/critical_review.md`):
+Script `supplementary/continuous_diagnostics.py` (added after the final experiments, to explain the Part B results):
 
 - **Part A of the script (compliant):** at the saved final solutions, the probability that one
   assignment neighbour improves, the distance to the optimum compared with the neighbourhood size,

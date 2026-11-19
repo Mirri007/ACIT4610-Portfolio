@@ -1,4 +1,4 @@
-# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_development_log.md.
+# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_declaration.md.
 """Tests for the Problem 1 supplementary diagnostics and the Part A paired comparison."""
 
 import numpy as np

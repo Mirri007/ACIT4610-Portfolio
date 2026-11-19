@@ -1,4 +1,4 @@
-# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_development_log.md.
+# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_declaration.md.
 """Tests for the continuous Bees Algorithm (Part B): initialisation, neighbourhood, clipping, budget, reproducibility."""
 
 import numpy as np

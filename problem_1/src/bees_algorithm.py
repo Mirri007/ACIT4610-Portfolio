@@ -1,4 +1,4 @@
-# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_development_log.md.
+# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_declaration.md.
 """
 The Bees Algorithm (BA) of Pham et al. (2006), written once and shared by Part A and Part B.
 

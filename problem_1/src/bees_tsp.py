@@ -1,4 +1,4 @@
-# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_development_log.md.
+# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_declaration.md.
 """
 Running the Bees Algorithm on one TSP instance (Part A).
 

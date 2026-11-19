@@ -133,7 +133,7 @@ nothing about future investment performance.
 
 ## Supplementary analyses (post hoc; not part of the required experiments)
 
-Added after the critical review (`docs/critical_review.md`). They change no algorithm, setting, seed,
+Added after the final experiments, to explain and contextualise the results. They change no algorithm, setting, seed,
 required result or required figure. Outputs go to `results/supplementary/` only.
 
 | Kind | Script | What it does | Seeds |

@@ -1,4 +1,4 @@
-# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_development_log.md.
+# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_declaration.md.
 """Tests for the statistics helpers and the case-level (μ+λ) vs (μ,λ) analysis, with hand-worked examples."""
 
 import pytest

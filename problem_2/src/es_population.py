@@ -1,4 +1,4 @@
-# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_development_log.md.
+# AI attribution: generated with Claude Code (Anthropic, Claude Opus 5.5). See docs/ai_declaration.md.
 """
 Variants 2 and 3: the population ES, (mu + lambda)-ES and (mu, lambda)-ES (assignment, "Variants 2 & 3").
 
